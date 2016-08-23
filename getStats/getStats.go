@@ -9,7 +9,7 @@ import (
 
 	"github.com/dotabuff/manta"
 	"github.com/dotabuff/manta/dota"
-	"xysj.com/dota2"
+	"new_stats/dota2"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
