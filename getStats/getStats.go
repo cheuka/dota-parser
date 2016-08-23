@@ -7,9 +7,10 @@ import (
 	"strconv"
 	"strings"
 
+	"new_stats/dota2"
+
 	"github.com/dotabuff/manta"
 	"github.com/dotabuff/manta/dota"
-	"xysj.com/dota2"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -23,6 +24,7 @@ func main() {
 	db, err := gorm.Open("mysql", "root:123456@/dota2_new_stats?charset=utf8&parseTime=True&loc=Local")
 	if err != nil {
 		log.Printf("failed to connect database\n")
+		return
 	}
 	defer db.Close()
 
@@ -31,6 +33,7 @@ func main() {
 	dir, err := ioutil.ReadDir("C:/TI6_replays/")
 	if err != nil {
 		log.Printf("failed to open dir\n")
+		return
 	}
 
 	for i, aFile := range dir {
