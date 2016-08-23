@@ -16,6 +16,7 @@ import (
 var allHeroStats map[uint32]*dota2.Stats
 var matchID uint64
 
+//ParseReplay 解析一场比赛的录像，将得到的统计数据存放在allHeroStats中
 func ParseReplay(filename string) (map[uint32]*dota2.Stats, error) {
 
 	f, err := os.Open(filename)
@@ -54,12 +55,6 @@ func ParseReplay(filename string) (map[uint32]*dota2.Stats, error) {
 	}
 	//获取统计结果至allHeroStats
 	getHeroCreateDeadlyDamages(allDamageLogs)
-
-	//打印结果
-	// log.Printf("英雄对敌方英雄造成的伤害统计：\n")
-	// for _, v := range allHeroStats {
-	// 	log.Printf("%s(Steamid=%d)——总伤害：%d，致死伤害：%d\n", v.HeroName, v.Steamid, v.CreateTotalDamages, v.CreateDeadlyDamages)
-	// }
 
 	return allHeroStats, nil
 }
