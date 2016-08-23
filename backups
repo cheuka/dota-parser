@@ -1,0 +1,51 @@
+//判断两条damageLog是否属于同一次击杀
+//注意参数的顺序：damageToDeath是致死伤害记录（包含了最全的GetAssistPlayers信息）
+//同一次击杀的damageLog拥有相同的：assist_players、target_source_name
+func isDamageFromSameDeath(damageToDeath, aDamage dota.CMsgDOTACombatLogEntry) bool {
+	if damageToDeath.GetTargetSourceName() != aDamage.GetTargetSourceName() || damageToDeath.GetTimestamp()-aDamage.GetTimestamp() > 15 {
+		return false
+	}
+	allAssistPlayers := make(map[uint32]bool)
+	for _, heroIndex := range damageToDeath.GetAssistPlayers() {
+		allAssistPlayers[heroIndex] = true
+	}
+
+	for _, heroIndex := range aDamage.GetAssistPlayers() {
+		if _, isExis := allAssistPlayers[heroIndex]; !isExis {
+			return false
+		}
+	}
+	return true
+}
+
+//debug版本：会输出每次击杀英雄的详细信息
+func getHeroCreateDeadlyDamages_debug(allDamageLogs []*dota.CMsgDOTACombatLogEntry) {
+	//记录所有英雄本体受到的伤害源属于敌方英雄（包括幻象、召唤物）的伤害记录
+	allHeroToHeroDamagelogs := getHeroCreateTotalDamages(allDamageLogs)
+	for _, deadlyDamagelog := range allDamageLogs {
+		//分析每条DeadlyDamage记录
+		if _, isTargetExist := allHeroStats[deadlyDamagelog.GetTargetName()]; isTargetExist && deadlyDamagelog.GetHealth() == 0 && !deadlyDamagelog.GetIsTargetIllusion() && deadlyDamagelog.GetAttackerTeam() != deadlyDamagelog.GetTargetTeam() {
+			if _, isExist := allHeroStats[deadlyDamagelog.GetDamageSourceName()]; isExist {
+				log.Printf("<<<%s was killed by %s>>>\n", allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, allHeroStats[deadlyDamagelog.GetDamageSourceName()].HeroName)
+			} else {
+				log.Printf("<<<%s was killed by %s>>>\n", allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, "not hero!")
+			}
+
+			allAssistHeroDamages := make(map[uint32]uint32) //测试用：输出每次英雄死亡的详细信息
+			for _, aDamagelog := range allHeroToHeroDamagelogs {
+				if isDamagelogCount(deadlyDamagelog, aDamagelog) {
+					allHeroStats[aDamagelog.GetDamageSourceName()].CreateDeadlyDamages += aDamagelog.GetValue()
+					//测试用：输出每次英雄死亡的详细信息
+					if v, isExist := allAssistHeroDamages[aDamagelog.GetDamageSourceName()]; isExist {
+						allAssistHeroDamages[aDamagelog.GetDamageSourceName()] = v + aDamagelog.GetValue()
+					} else {
+						allAssistHeroDamages[aDamagelog.GetDamageSourceName()] = aDamagelog.GetValue()
+					}
+				}
+			}
+			for i, v := range allAssistHeroDamages {
+				log.Printf("%s:%d\n", allHeroStats[i].HeroName, v)
+			}
+		}
+	}
+}
