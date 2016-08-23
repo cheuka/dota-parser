@@ -11,10 +11,6 @@ import (
 
 	"github.com/dotabuff/manta"
 	"github.com/dotabuff/manta/dota"
-<<<<<<< HEAD
-=======
-	"new_stats/dota2"
->>>>>>> 1e5d8286a9f12b566ed22d6405c0211e121aed5b
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
