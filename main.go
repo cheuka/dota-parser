@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	allHeroStats, err := getStats.ParseReplay("C:/2545034458.dem")
+	allHeroStats, err := getStats.GetStats("C:/2545034458.dem")
 	if err != nil {
 		log.Fatalf("解析录像失败: %s", err)
 	}

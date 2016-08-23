@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"new_stats/dota2"
 
@@ -16,8 +15,8 @@ import (
 var allHeroStats map[uint32]*dota2.Stats
 var matchID uint64
 
-//ParseReplay 解析一场比赛的录像，将得到的统计数据存放在allHeroStats中
-func ParseReplay(filename string) (map[uint32]*dota2.Stats, error) {
+//GetStats 解析一场比赛的录像，将得到的统计数据存放在allHeroStats中
+func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
 
 	f, err := os.Open(filename)
 	if err != nil {
@@ -104,37 +103,4 @@ func getHeroCreateDeadlyDamages(allDamageLogs []*dota.CMsgDOTACombatLogEntry) {
 			}
 		}
 	}
-}
-
-//初始化：[1]找出所有英雄在combatLog中的index	[2]找出十名英雄使用者的SteamId
-func initAllHeroStats(p *manta.Parser, dotaGameInfo *dota.CGameInfo_CDotaGameInfo) bool {
-	allHeroStats = make(map[uint32]*dota2.Stats)
-	index := int32(0)
-	for {
-		name, has := p.LookupStringByIndex("CombatLogNames", index)
-		//假设index在CombatLogNames中是没有间隔的，遍历CombatLogNames
-		if !has {
-			break
-		}
-		if strings.Contains(name, "npc_dota_hero_") {
-			allHeroStats[uint32(index)] = &dota2.Stats{HeroName: strings.TrimPrefix(name, "npc_dota_hero_")}
-			if len(allHeroStats) == 10 {
-				break
-			}
-		}
-		index = index + 1
-	}
-	if len(allHeroStats) != 10 {
-		log.Printf("无法从combatLog中找到十个英雄的index\n")
-		return false
-	}
-	for _, aPlayInfo := range dotaGameInfo.GetPlayerInfo() {
-		for _, aHeroStats := range allHeroStats {
-			if strings.Contains(aPlayInfo.GetHeroName(), aHeroStats.HeroName) {
-				aHeroStats.Steamid = aPlayInfo.GetSteamid()
-				aHeroStats.MatchId = matchID
-			}
-		}
-	}
-	return true
 }
