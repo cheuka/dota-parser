@@ -27,7 +27,7 @@ func calcCreateDeadlyControl(replayData *ReplayData) {
 
 func isModifierlogCount(replayData *ReplayData, deadlyDamagelog, aModifierLog *dota.CMsgDOTACombatLogEntry) bool {
 	_, isAttackerExist := allHeroStats[aModifierLog.GetAttackerName()]
-	if !isAttackerExist || aModifierLog.GetIsTargetIllusion() || aModifierLog.GetTargetIsSelf() {
+	if !isAttackerExist || aModifierLog.GetIsTargetIllusion() || aModifierLog.GetAttackerName() == aModifierLog.GetTargetName() {
 		return false
 	}
 	modifierTimeStamp := aModifierLog.GetTimestamp()
