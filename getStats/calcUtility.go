@@ -24,17 +24,3 @@ func isHeroToOpponentHeroCombatLog(aCombatLog *dota.CMsgDOTACombatLogEntry) bool
 	}
 	return false
 }
-
-//【写这个函数，主要是因为技能combatLog里面居然没有双方的team信息！！！】
-//判断这条战斗记录，是不是己方英雄（通过其幻象、召唤物）作用于敌方英雄，需要满足以下全部条件才返回yes；否则返回no
-//[1]DamageSourceName的key在allHeroStats中
-//[2]TargetName的key在allHeroStats中
-//[3]非幻象
-func isHeroToHeroCombatLog(aCombatLog *dota.CMsgDOTACombatLogEntry) bool {
-	_, isDamageSourceExist := allHeroStats[aCombatLog.GetDamageSourceName()]
-	_, isTargetExist := allHeroStats[aCombatLog.GetTargetName()]
-	if isDamageSourceExist && isTargetExist && !aCombatLog.GetIsTargetIllusion() && !aCombatLog.GetTargetIsSelf() {
-		return true
-	}
-	return false
-}

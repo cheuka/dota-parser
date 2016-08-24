@@ -16,7 +16,7 @@ func calcCreateDeadlyControl(replayData *ReplayData) {
 				log.Printf("%v——<<<%s was killed by NOT HERO>>>\n", timeStampToString(deadlyDamagelog.GetTimestamp()-replayData.gameStartTime), allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
 			}
 			for _, aModifierLog := range replayData.allModifierLogs {
-				if isHeroToHeroCombatLog(aModifierLog) && isModifierlogCount(replayData, deadlyDamagelog, aModifierLog) {
+				if isModifierlogCount(replayData, deadlyDamagelog, aModifierLog) {
 					allHeroStats[aModifierLog.GetAttackerName()].CreateDeadlyStiffControl += aModifierLog.GetModifierElapsedDuration()
 				}
 			}
@@ -26,6 +26,10 @@ func calcCreateDeadlyControl(replayData *ReplayData) {
 }
 
 func isModifierlogCount(replayData *ReplayData, deadlyDamagelog, aModifierLog *dota.CMsgDOTACombatLogEntry) bool {
+	_, isAttackerExist := allHeroStats[aModifierLog.GetAttackerName()]
+	if !isAttackerExist || aModifierLog.GetIsTargetIllusion() || aModifierLog.GetTargetIsSelf() {
+		return false
+	}
 	modifierTimeStamp := aModifierLog.GetTimestamp()
 	deadlyDamagelogTimeStamp := deadlyDamagelog.GetTimestamp()
 	// +1原因是控制时间有时候是在英雄死亡后结算
