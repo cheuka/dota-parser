@@ -8,11 +8,13 @@ import (
 	"strconv"
 	"strings"
 
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/jinzhu/gorm"
 )
 
 func main() {
 	textAGame("C:/2545034458.dem")
+	//writeToDB()
 }
 
 func textAGame(fileName string) {
