@@ -19,6 +19,8 @@ import (
 //m_hSelectedHero对应 CDOTA_Unit_Hero_Ogre_Magi中的m_hInventoryParent or m_hModifierParent
 // CDOTA_PlayerResource heroId 对应
 
+
+//modifier_shadow_demon_disruption 毒狗的关 是否加进去还需判断目标是否同一个team
 var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
 
 func parseReplay(filename string, replayData *ReplayData) error {
@@ -37,7 +39,10 @@ func parseReplay(filename string, replayData *ReplayData) error {
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_DAMAGE:
 			replayData.allDamageLogs = append(replayData.allDamageLogs, m)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_REMOVE:
+			//printModifer(m, parser, replayData)
 			replayData.allModifierLogs = append(replayData.allModifierLogs, m)
+		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD:
+			//printModifer(m, parser, replayData)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GAME_STATE:
 			if m.GetValue() == uint32(5) {
 				replayData.gameStartTime = m.GetTimestamp()
@@ -51,21 +56,21 @@ func parseReplay(filename string, replayData *ReplayData) error {
 		return nil
 	})
 
-	parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
-
-		if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
-			log.Printf("EntityEvent : %v, %v", entity.ClassName, pet)
-			printProperties("ClassBaseline", entity.ClassBaseline)
-			printProperties("Properties", entity.Properties)
-			log.Printf("\n\n")
-		}
-		//for k, v := range entity.ClassBaseline.KV{
-		//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
-		//		log.Printf("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
-		//	}
-		//}
-		return nil
-	})
+	//parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
+	//
+	//	if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
+	//		log.Printf("EntityEvent : %v, %v", entity.ClassName, pet)
+	//		printProperties("ClassBaseline", entity.ClassBaseline)
+	//		printProperties("Properties", entity.Properties)
+	//		log.Printf("\n\n")
+	//	}
+	//	//for k, v := range entity.ClassBaseline.KV{
+	//	//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
+	//	//		log.Printf("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
+	//	//	}
+	//	//}
+	//	return nil
+	//})
 	parser.Start()                       //开始解析录像
 	initAllHeroStats(parser, replayData) //初始化initAllHeroStats
 	return nil                           //解析完成，返回数据
@@ -122,4 +127,19 @@ func printProperties(tag string, ppt *manta.Properties) {
 	for _, k := range sorted_keys {
 		log.Printf("%v, %v : %v\n", tag, k, ppt.KV[k])
 	}
+}
+
+func printModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData){
+	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() &&!m.GetIsTargetIllusion(){
+		log.Printf("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
+		log.Printf("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
+	}
+}
+
+func lookForName(parser *manta.Parser, index uint32) string{
+	str, has:= parser.LookupStringByIndex("CombatLogNames", int32(index))
+	if has{
+		return str
+	}
+	return ""
 }
