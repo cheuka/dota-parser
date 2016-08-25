@@ -10,9 +10,13 @@ import (
 func calcCreateDeadlyControl(replayData *ReplayData) {
 	for _, deadlyDamagelog := range replayData.allDamageLogs {
 		if deadlyDamagelog.GetHealth() == 0 && isToOpponentHeroCombatLog(deadlyDamagelog) {
+			if _, isExist := allHeroStats[deadlyDamagelog.GetDamageSourceName()]; isExist {
+				log.Printf("%v——<<<%s was killed by %s>>>\n", timeStampToString(deadlyDamagelog.GetTimestamp()-replayData.gameStartTime), allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, allHeroStats[deadlyDamagelog.GetDamageSourceName()].HeroName)
+			} else {
+				log.Printf("%v——<<<%s was killed by NOT HERO>>>\n", timeStampToString(deadlyDamagelog.GetTimestamp()-replayData.gameStartTime), allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
+			}
 			for _, aModifierLog := range replayData.allModifierLogs {
-				if isHeroToHeroCombatLog(aModifierLog) && isModifierlogCount(replayData, deadlyDamagelog, aModifierLog) {
-					log.Printf("%s\n", aModifierLog.String())
+				if isModifierlogCount(replayData, deadlyDamagelog, aModifierLog) {
 					allHeroStats[aModifierLog.GetAttackerName()].CreateDeadlyStiffControl += aModifierLog.GetModifierElapsedDuration()
 				}
 			}
@@ -22,13 +26,16 @@ func calcCreateDeadlyControl(replayData *ReplayData) {
 }
 
 func isModifierlogCount(replayData *ReplayData, deadlyDamagelog, aModifierLog *dota.CMsgDOTACombatLogEntry) bool {
+	_, isAttackerExist := allHeroStats[aModifierLog.GetAttackerName()]
+	if !isAttackerExist || aModifierLog.GetIsTargetIllusion() || aModifierLog.GetAttackerName() == aModifierLog.GetTargetName() {
+		return false
+	}
 	modifierTimeStamp := aModifierLog.GetTimestamp()
 	deadlyDamagelogTimeStamp := deadlyDamagelog.GetTimestamp()
 	// +1原因是控制时间有时候是在英雄死亡后结算
 	if modifierTimeStamp <= deadlyDamagelogTimeStamp+float32(1) && modifierTimeStamp >= deadlyDamagelogTimeStamp-17.0 && aModifierLog.GetTargetName() == deadlyDamagelog.GetTargetName() {
 		//stun时间大于0或者是沉默技能或者在控制列表里
 		if aModifierLog.GetStunDuration() > float32(0) || aModifierLog.GetSilenceModifier() || replayData.specialModifier[int32(aModifierLog.GetInflictorName())] != nil {
-			log.Printf("%v %v was killed by %v\n", timeStampToString(deadlyDamagelog.GetTimestamp()-replayData.gameStartTime), deadlyDamagelog.GetTargetName(), deadlyDamagelog.GetDamageSourceName())
 			log.Printf("%v : %v removed %v from %v last %v", timeStampToString(aModifierLog.GetTimestamp()-replayData.gameStartTime), allHeroStats[aModifierLog.GetTargetName()].HeroName, aModifierLog.GetInflictorName(), allHeroStats[aModifierLog.GetAttackerName()].HeroName, aModifierLog.GetModifierElapsedDuration())
 			return true
 		}
