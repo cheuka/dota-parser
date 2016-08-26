@@ -2,7 +2,6 @@ package getStats
 
 import (
 	"github.com/dotabuff/manta/dota"
-	"log"
 )
 
 
@@ -59,7 +58,7 @@ func calcTeamDeath(replayData *ReplayData){
 		heroStates.CreateDeadlyStiffControlPerDeath = float32(heroStates.CreateDeadlyStiffControl) / float32(heroStates.OpponentHeroDeaths)
 
 
-		log.Printf("player: %v, hero : %v, opponentdeath : %v, damage perdeath : %v, control per death : %v", heroStates.PlayerName, heroStates.HeroName, heroStates.OpponentHeroDeaths, heroStates.CreateDeadlyDamagesPerDeath, heroStates.CreateDeadlyStiffControlPerDeath)
+		Clog("player: %v, hero : %v, opponentdeath : %v, damage perdeath : %v, control per death : %v", heroStates.PlayerName, heroStates.HeroName, heroStates.OpponentHeroDeaths, heroStates.CreateDeadlyDamagesPerDeath, heroStates.CreateDeadlyStiffControlPerDeath)
 	}
 }
 
