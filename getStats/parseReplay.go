@@ -10,6 +10,7 @@ import (
 	"github.com/dotabuff/manta/dota"
 	"log"
 	"sort"
+	"reflect"
 )
 //package entity note 1.cdotaplayer.playerId对应 CDOTA_Unit_Hero_中的playerId, playId按照楼层排序
 //2016/08/25 17:31:06 Properties, m_vecPlayerTeamData.0006.m_hSelectedHero : 15499785
@@ -22,6 +23,20 @@ import (
 
 //modifier_shadow_demon_disruption 毒狗的关 是否加进去还需判断目标是否同一个team
 var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
+//m_vecPlayerTeamData
+//0001
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_flTeamFightParticipation : 0.25
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_hSelectedHero : 10142214
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_iAssists : 2
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_iDeaths : 1
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_iLevel : 7
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_iRespawnSeconds : 27
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_nSelectedHeroID : 68
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0001.m_flTeamFightParticipation : 0.75
+
+//2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerSteamID : 76561198046993283
+//2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
+var playResourceEntity *manta.PacketEntity
 
 func parseReplay(filename string, replayData *ReplayData) error {
 	f, err := os.Open(filename)
@@ -57,21 +72,22 @@ func parseReplay(filename string, replayData *ReplayData) error {
 		return nil
 	})
 
-	//parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
-	//
-	//	if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
-	//		log.Printf("EntityEvent : %v, %v", entity.ClassName, pet)
-	//		printProperties("ClassBaseline", entity.ClassBaseline)
-	//		printProperties("Properties", entity.Properties)
-	//		log.Printf("\n\n")
-	//	}
-	//	//for k, v := range entity.ClassBaseline.KV{
-	//	//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
-	//	//		log.Printf("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
-	//	//	}
-	//	//}
-	//	return nil
-	//})
+	parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
+
+		if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
+			//log.Printf("EntityEvent : %v, %v", entity.ClassName, pet)
+			//printProperties("ClassBaseline", entity.ClassBaseline)
+			//printProperties("Properties", entity.Properties)
+			//log.Printf("\n\n")
+			playResourceEntity = entity
+		}
+		//for k, v := range entity.ClassBaseline.KV{
+		//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
+		//		log.Printf("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
+		//	}
+		//}
+		return nil
+	})
 	parser.Start()                       //开始解析录像
 	initAllHeroStats(parser, replayData) //初始化initAllHeroStats
 	return nil                           //解析完成，返回数据
@@ -110,9 +126,13 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 			if strings.Contains(aPlayInfo.GetHeroName(), aHeroStats.HeroName) {
 				aHeroStats.Steamid = aPlayInfo.GetSteamid()
 				aHeroStats.MatchId = replayData.dotaGameInfo.GetMatchId()
+				aHeroStats.PlayerName = aPlayInfo.GetPlayerName();
+				getHeroIdFromSteamId(aHeroStats, playResourceEntity)
 			}
 		}
 	}
+
+
 	return nil
 }
 
@@ -143,4 +163,24 @@ func lookForName(parser *manta.Parser, index uint32) string{
 		return str
 	}
 	return ""
+}
+
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_hSelectedHero : 10142214
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_nSelectedHeroID : 68
+
+//2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerSteamID : 76561198046993283
+//2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
+//根据steamId 获取英雄ID
+func  getHeroIdFromSteamId(aHeroStats *dota2.Stats, playResourceEntity *manta.PacketEntity)  {
+	steamId := aHeroStats.Steamid
+	for index := 0; index < 10; index++{
+		indexStr := fmt.Sprintf("m_vecPlayerData.000%d.m_iPlayerSteamID", index)
+		if v, ok := playResourceEntity.FetchUint64(indexStr); ok && v == steamId{
+			if v, ok := playResourceEntity.FetchInt32(fmt.Sprintf("m_vecPlayerTeamData.000%d.m_nSelectedHeroID", index)); ok{
+				log.Printf("steamid : %v, heroId : %v, %v", steamId, v, reflect.TypeOf(v))
+				aHeroStats.HeroId = uint32(v)
+			}
+
+		}
+	}
 }

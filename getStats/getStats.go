@@ -15,6 +15,7 @@ type ReplayData struct {
 	dotaGameInfo    *dota.CGameInfo_CDotaGameInfo
 	specialModifier map[int32]*string //需要特殊记录的控制，无getstuntime和issilence，比如斧王的吼
 	gameStartTime   float32
+	teamDeath map[uint32]uint32 //队伍死亡次数， key:team id,value: 死亡次数
 }
 
 //统计每个英雄的数据。ket=英雄在combatlog里面的index
@@ -22,7 +23,9 @@ var allHeroStats map[uint32]*dota2.Stats
 
 //GetStats 解析一场比赛的录像，将得到的统计数据存放在allHeroStats中
 func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
-	replayData := ReplayData{}
+	replayData := ReplayData{
+		teamDeath : make(map[uint32]uint32, 0),
+	}
 	//解析录像，获取数据
 	err := parseReplay(filename, &replayData)
 	if err != nil {
@@ -33,6 +36,7 @@ func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
 	calcCreateDeadlyDamages(&replayData)
 	//计算控制指标至allHeroStats
 	calcCreateDeadlyControl(&replayData)
+	calcTeamDeath(&replayData)
 
 	return allHeroStats, nil
 }
