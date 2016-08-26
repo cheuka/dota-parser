@@ -13,8 +13,8 @@ import (
 )
 
 func main() {
-	textAGame("C:/2545034458.dem")
-	//writeToDB()
+	//textAGame("C:/2545034458.dem")
+	writeToDB()
 }
 
 func textAGame(fileName string) {
@@ -49,11 +49,14 @@ func writeToDB() {
 		log.Printf("正在解析第%d个录像：%d", i+1, matchID)
 		allHeroStats, err := getStats.GetStats(aRepaly)
 		if err != nil {
-			//写结果到数据库
-			for _, aHeroStats := range allHeroStats {
-				db.Create(aHeroStats)
-			}
+			log.Fatalf("解析录像失败: %s", err)
 		}
+		//写结果到数据库
+		for _, aHeroStats := range allHeroStats {
+			aHeroStats.MatchId = matchID
+			db.Create(aHeroStats)
+		}
+
 	}
 
 }
