@@ -8,7 +8,6 @@ import (
 
 	"github.com/dotabuff/manta"
 	"github.com/dotabuff/manta/dota"
-	"log"
 	"sort"
 	"reflect"
 )

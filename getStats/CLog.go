@@ -1,15 +1,17 @@
 package getStats
 
-import "log"
+import (
+	"log"
+)
 
 var debug = true
 
-func SetDebug(isDebug bool)  {
+func SetDebug(isDebug bool) {
 	debug = isDebug
 }
 
-func Clog(format string, i ...interface{}){
-	if debug{
-		log.Printf(format, i)
+func Clog(format string, v ...interface{}) {
+	if debug {
+		log.Printf(format, v...)
 	}
 }

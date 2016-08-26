@@ -2,7 +2,6 @@ package getStats
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/dotabuff/manta/dota"
 )
