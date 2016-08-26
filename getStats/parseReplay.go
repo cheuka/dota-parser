@@ -42,6 +42,7 @@ func parseReplay(filename string, replayData *ReplayData) error {
 			//printModifer(m, parser, replayData)
 			replayData.allModifierLogs = append(replayData.allModifierLogs, m)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD:
+			replayData.allModifierLogs = append(replayData.allModifierLogs, m)
 			//printModifer(m, parser, replayData)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GAME_STATE:
 			if m.GetValue() == uint32(5) {
