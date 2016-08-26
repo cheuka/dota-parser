@@ -68,22 +68,22 @@ func parseReplay(filename string, replayData *ReplayData) error {
 	})
 	parser.Callbacks.OnCDemoFileInfo(func(m *dota.CDemoFileInfo) error {
 		replayData.dotaGameInfo = m.GameInfo.Dota
-		log.Printf(m.String())
+		Clog(m.String())
 		return nil
 	})
 
 	parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
 
 		if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
-			//log.Printf("EntityEvent : %v, %v", entity.ClassName, pet)
-			//printProperties("ClassBaseline", entity.ClassBaseline)
-			//printProperties("Properties", entity.Properties)
-			//log.Printf("\n\n")
+			//Clog("EntityEvent : %v, %v", entity.ClassName, pet)
+			//Clog("ClassBaseline", entity.ClassBaseline)
+			//Clog("Properties", entity.Properties)
+			//Clog("\n\n")
 			playResourceEntity = entity
 		}
 		//for k, v := range entity.ClassBaseline.KV{
 		//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
-		//		log.Printf("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
+		//		Clog("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
 		//	}
 		//}
 		return nil
@@ -146,14 +146,14 @@ func printProperties(tag string, ppt *manta.Properties) {
 	sort.Strings(sorted_keys)
 
 	for _, k := range sorted_keys {
-		log.Printf("%v, %v : %v\n", tag, k, ppt.KV[k])
+		Clog("%v, %v : %v\n", tag, k, ppt.KV[k])
 	}
 }
 
 func printModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData){
 	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() &&!m.GetIsTargetIllusion(){
-		log.Printf("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
-		log.Printf("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
+		Clog("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
+		Clog("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
 	}
 }
 
@@ -177,7 +177,7 @@ func  getHeroIdFromSteamId(aHeroStats *dota2.Stats, playResourceEntity *manta.Pa
 		indexStr := fmt.Sprintf("m_vecPlayerData.000%d.m_iPlayerSteamID", index)
 		if v, ok := playResourceEntity.FetchUint64(indexStr); ok && v == steamId{
 			if v, ok := playResourceEntity.FetchInt32(fmt.Sprintf("m_vecPlayerTeamData.000%d.m_nSelectedHeroID", index)); ok{
-				log.Printf("steamid : %v, heroId : %v, %v", steamId, v, reflect.TypeOf(v))
+				Clog("steamid : %v, heroId : %v, %v", steamId, v, reflect.TypeOf(v))
 				aHeroStats.HeroId = uint32(v)
 			}
 
