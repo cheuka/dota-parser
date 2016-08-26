@@ -36,3 +36,4 @@ func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
 
 	return allHeroStats, nil
 }
+
