@@ -36,7 +36,7 @@ func calcCreateDeadlyControl(replayData *ReplayData) {
 			//map保存modifier add的记录，在add和remove时如果inflictorName相同(比如晕眩)而attackName不同时，同时记录add和remove两条记录
 			addModifierMap := make(map[uint32]*dota.CMsgDOTACombatLogEntry)
 			for _, aModifierLog := range replayData.allModifierLogs {
-				if isModifierlogCount1(replayData, deadlyDamagelog, aModifierLog, addModifierMap) {
+				if isModifierlogCount(replayData, deadlyDamagelog, aModifierLog, addModifierMap) {
 					if aModifierLog.GetType() == dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD {
 						//add 将保存的状态加入到map中去
 						addModifierMap[aModifierLog.GetInflictorName()] = aModifierLog
@@ -60,35 +60,6 @@ func calcCreateDeadlyControl(replayData *ReplayData) {
 
 }
 
-func isModifierlogCount1(replayData *ReplayData, deadlyDamagelog, aModifierLog *dota.CMsgDOTACombatLogEntry, addModifierMap map[uint32]*dota.CMsgDOTACombatLogEntry) bool {
-	_, isAttackerExist := allHeroStats[aModifierLog.GetAttackerName()]
-	if !isAttackerExist || aModifierLog.GetIsTargetIllusion() || aModifierLog.GetAttackerName() == aModifierLog.GetTargetName() {
-		return false
-	}
-
-	modifierTimeStamp := aModifierLog.GetTimestamp()
-	deadlyDamagelogTimeStamp := deadlyDamagelog.GetTimestamp()
-	// +1原因是控制时间有时候是在英雄死亡后结算
-	if modifierTimeStamp <= deadlyDamagelogTimeStamp+float32(1) && modifierTimeStamp >= deadlyDamagelogTimeStamp-17.0 && aModifierLog.GetTargetName() == deadlyDamagelog.GetTargetName() {
-		//stun时间大于0或者是沉默技能或者在控制列表里
-		if aModifierLog.GetStunDuration() > float32(0) || aModifierLog.GetSilenceModifier() || replayData.specialModifier[int32(aModifierLog.GetInflictorName())] != nil {
-			if aModifierLog.GetType() == dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD {
-
-			} else {
-				Clog("%v : %v removed %v from %v last %v", timeStampToString(aModifierLog.GetTimestamp()-replayData.gameStartTime), allHeroStats[aModifierLog.GetTargetName()].HeroName, aModifierLog.GetInflictorName(), allHeroStats[aModifierLog.GetAttackerName()].HeroName, aModifierLog.GetModifierElapsedDuration())
-
-			}
-			if addModifierMap[aModifierLog.GetInflictorName()] != nil {
-				if addModifierMap[aModifierLog.GetInflictorName()].GetAttackerName() != aModifierLog.GetAttackerName() {
-					Clog("%v : %v add %v from %v last %v", timeStampToString(addModifierMap[aModifierLog.GetInflictorName()].GetTimestamp()-replayData.gameStartTime), allHeroStats[addModifierMap[aModifierLog.GetInflictorName()].GetTargetName()].HeroName, addModifierMap[aModifierLog.GetInflictorName()].GetInflictorName(), allHeroStats[addModifierMap[aModifierLog.GetInflictorName()].GetAttackerName()].HeroName, addModifierMap[aModifierLog.GetInflictorName()].GetModifierDuration())
-				}
-
-			}
-			return true
-		}
-	}
-	return false
-}
 
 func isModifierlogCount(replayData *ReplayData, deadlyDamagelog, aModifierLog *dota.CMsgDOTACombatLogEntry, addModifierMap map[uint32]*dota.CMsgDOTACombatLogEntry) bool {
 	modifierTimeStamp := aModifierLog.GetTimestamp()
