@@ -14,7 +14,8 @@ import (
 
 func main() {
 	//textAGame("C:/2545034458.dem")
-	writeToDB()
+	textAGame("C:/TI6_replays/2549479137.dem")
+	//writeToDB()
 }
 
 func textAGame(fileName string) {
