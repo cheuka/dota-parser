@@ -19,7 +19,7 @@ func Clog(format string, v ...interface{}) {
 }
 
 //输出控制详情
-func printControlDetail(replayData *ReplayData, deadlyDamagelog, aModifierLog *dota.CMsgDOTACombatLogEntry) {
+func printControlDetail(replayData *ReplayData, aModifierLog *dota.CMsgDOTACombatLogEntry) {
 	targetName := "未知目标"
 	v, isTargetExist := allHeroStats[aModifierLog.GetTargetName()]
 	if isTargetExist {
@@ -45,7 +45,9 @@ func printControlDetail(replayData *ReplayData, deadlyDamagelog, aModifierLog *d
 		eventName = "remove"
 	case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD:
 		eventName = "add"
+	case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_REFRESH:
+		eventName = "refresh"
 	}
 
-	Clog("%v : 事件-%v，技能-%v，目标-%v，攻击者-%v，攻击源头-%v，预计持续时间-%v，实际作用时间-%v。", timeStampToString(aModifierLog.GetTimestamp()-replayData.gameStartTime), eventName, aModifierLog.GetInflictorName(), targetName, attackerName, damageSourceName, aModifierLog.GetModifierDuration(), aModifierLog.GetModifierElapsedDuration())
+	Clog("%v : 事件:%v，技能:%v，目标:%v，攻击者:%v，攻击源头:%v，预计持续时间:%v，实际作用时间:%v，stun_duration:%v。", timeStampToString(aModifierLog.GetTimestamp()-replayData.gameStartTime), eventName, aModifierLog.GetInflictorName(), targetName, attackerName, damageSourceName, aModifierLog.GetModifierDuration(), aModifierLog.GetModifierElapsedDuration(), aModifierLog.GetStunDuration())
 }
