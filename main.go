@@ -3,13 +3,10 @@ package main
 import (
 	"log"
 	"new_stats/getStats"
-
-	//_ "github.com/go-sql-driver/mysql"
-	//"github.com/jinzhu/gorm"
 )
 
 func main() {
-	textAGame("D:/2545034458.dem")
+	textAGame("D://2562582896.dem")
 	//writeToDB()
 }
 
@@ -21,10 +18,10 @@ func textAGame(fileName string) {
 
 	log.Printf("英雄对敌方英雄造成的伤害统计：\n")
 	for _, v := range allHeroStats {
-		log.Printf("%s(Steamid=%d)——总伤害：%d，致死伤害：%d，致死控制时间:%.2f\n", v.HeroName, v.Steamid, v.CreateTotalDamages, v.CreateDeadlyDamages, v.CreateDeadlyStiffControl)
+		log.Printf("%s(Steamid=%d)——总伤害：%d，致死伤害：%d，致死控制时间:%.2f, 单杀/被单杀次数: %d/%d, \n", v.HeroName, v.Steamid, v.CreateTotalDamages, v.CreateDeadlyDamages, v.CreateDeadlyStiffControl, v.AloneKilledNum, v.AloneBeKilledNum)
 	}
 }
-//
+
 //func writeToDB() {
 //	db, err := gorm.Open("mysql", "root:123456@/dota2_new_stats?charset=utf8&parseTime=True&loc=Local")
 //	if err != nil {

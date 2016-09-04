@@ -6,11 +6,13 @@ import (
 	"os"
 	"strings"
 
+	"reflect"
+	"sort"
+
 	"github.com/dotabuff/manta"
 	"github.com/dotabuff/manta/dota"
-	"log"
-	"sort"
 )
+
 //package entity note 1.cdotaplayer.playerId对应 CDOTA_Unit_Hero_中的playerId, playId按照楼层排序
 //2016/08/25 17:31:06 Properties, m_vecPlayerTeamData.0006.m_hSelectedHero : 15499785
 //2016/08/25 17:31:06 Properties, m_vecPlayerTeamData.0006.m_iLevel : 1
@@ -19,11 +21,23 @@ import (
 //m_hSelectedHero对应 CDOTA_Unit_Hero_Ogre_Magi中的m_hInventoryParent or m_hModifierParent
 // CDOTA_PlayerResource heroId 对应
 
-
 //modifier_shadow_demon_disruption 毒狗的关 是否加进去还需判断目标是否同一个team
 var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
-//用于计算重复stun时的map add时加入，remove时移出，若attackname不同，则计算两次
-var stunModifier map[uint32]*dota.CMsgDOTACombatLogEntry
+
+//m_vecPlayerTeamData
+//0001
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_flTeamFightParticipation : 0.25
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_hSelectedHero : 10142214
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_iAssists : 2
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_iDeaths : 1
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_iLevel : 7
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_iRespawnSeconds : 27
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_nSelectedHeroID : 68
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0001.m_flTeamFightParticipation : 0.75
+
+//2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerSteamID : 76561198046993283
+//2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
+var playResourceEntity *manta.PacketEntity
 
 func parseReplay(filename string, replayData *ReplayData) error {
 	f, err := os.Open(filename)
@@ -35,52 +49,54 @@ func parseReplay(filename string, replayData *ReplayData) error {
 	if err != nil {
 		return fmt.Errorf("初始化解析器失败: %s", err)
 	}
-	stunModifier = make(map[uint32]*dota.CMsgDOTACombatLogEntry, 0)
 	parser.Callbacks.OnCMsgDOTACombatLogEntry(func(m *dota.CMsgDOTACombatLogEntry) error {
 		logType := m.GetType()
 		switch logType {
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_DAMAGE:
 			replayData.allDamageLogs = append(replayData.allDamageLogs, m)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_REMOVE:
-			//printRemoveModifer(m, parser, replayData)
-			if stunModifier[m.GetInflictorName()] != nil{
-				if m.GetAttackerName() != stunModifier[m.GetInflictorName()].GetAttackerName(){
-					replayData.allModifierLogs = append(replayData.allModifierLogs, stunModifier[m.GetInflictorName()])
-				}
-				delete(stunModifier, m.GetInflictorName())
-			}
+			//printModifer(m, parser, replayData)
 			replayData.allModifierLogs = append(replayData.allModifierLogs, m)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD:
-			//printModifer(m, parser, replayData)
-			stunModifier[m.GetInflictorName()] = m
+			replayData.allModifierLogs = append(replayData.allModifierLogs, m)
+		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GOLD:
+			//加入金钱记录的功能
+			replayData.allGoldLogs = append(replayData.allGoldLogs, m)
+			if m.GetGoldReason() != uint32(13) && m.GetGoldReason() != uint32(0) && m.GetGoldReason() != uint32(11) && m.GetGoldReason() != uint32(6) && m.GetGoldReason() != uint32(2) && m.GetGoldReason() != uint32(14){
+				Clog(m.String())
+			}
+		//printModifer(m, parser, replayData)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GAME_STATE:
 			if m.GetValue() == uint32(5) {
 				replayData.gameStartTime = m.GetTimestamp()
+			} else if m.GetValue() == uint32(6) {
+				replayData.gameEndTime = m.GetTimestamp()
 			}
 		}
 		return nil
 	})
 	parser.Callbacks.OnCDemoFileInfo(func(m *dota.CDemoFileInfo) error {
 		replayData.dotaGameInfo = m.GameInfo.Dota
-		log.Printf(m.String())
+		Clog(m.String())
 		return nil
 	})
 
-	//parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
-	//
-	//	if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
-	//		log.Printf("EntityEvent : %v, %v", entity.ClassName, pet)
-	//		printProperties("ClassBaseline", entity.ClassBaseline)
-	//		printProperties("Properties", entity.Properties)
-	//		log.Printf("\n\n")
-	//	}
-	//	//for k, v := range entity.ClassBaseline.KV{
-	//	//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
-	//	//		log.Printf("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
-	//	//	}
-	//	//}
-	//	return nil
-	//})
+	parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
+
+		if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
+			//Clog("EntityEvent : %v, %v", entity.ClassName, pet)
+			//Clog("ClassBaseline", entity.ClassBaseline)
+			//Clog("Properties", entity.Properties)
+			//Clog("\n\n")
+			playResourceEntity = entity
+		}
+		//for k, v := range entity.ClassBaseline.KV{
+		//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
+		//		Clog("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
+		//	}
+		//}
+		return nil
+	})
 	parser.Start()                       //开始解析录像
 	initAllHeroStats(parser, replayData) //初始化initAllHeroStats
 	return nil                           //解析完成，返回数据
@@ -119,9 +135,12 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 			if strings.Contains(aPlayInfo.GetHeroName(), aHeroStats.HeroName) {
 				aHeroStats.Steamid = aPlayInfo.GetSteamid()
 				aHeroStats.MatchId = replayData.dotaGameInfo.GetMatchId()
+				aHeroStats.PlayerName = aPlayInfo.GetPlayerName()
+				getHeroIdFromSteamId(aHeroStats, playResourceEntity)
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -135,28 +154,41 @@ func printProperties(tag string, ppt *manta.Properties) {
 	sort.Strings(sorted_keys)
 
 	for _, k := range sorted_keys {
-		log.Printf("%v, %v : %v\n", tag, k, ppt.KV[k])
+		Clog("%v, %v : %v\n", tag, k, ppt.KV[k])
 	}
 }
 
-func printModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData){
-	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() &&!m.GetIsTargetIllusion(){
-		log.Printf("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
-		log.Printf("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
+func printModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData) {
+	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() && !m.GetIsTargetIllusion() {
+		Clog("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
+		Clog("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
 	}
 }
 
-func printRemoveModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData){
-	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() &&!m.GetIsTargetIllusion(){
-		log.Printf("%v , %v remove %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
-		log.Printf("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
-	}
-}
-
-func lookForName(parser *manta.Parser, index uint32) string{
-	str, has:= parser.LookupStringByIndex("CombatLogNames", int32(index))
-	if has{
+func lookForName(parser *manta.Parser, index uint32) string {
+	str, has := parser.LookupStringByIndex("CombatLogNames", int32(index))
+	if has {
 		return str
 	}
 	return ""
+}
+
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_hSelectedHero : 10142214
+//2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_nSelectedHeroID : 68
+
+//2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerSteamID : 76561198046993283
+//2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
+//根据steamId 获取英雄ID
+func getHeroIdFromSteamId(aHeroStats *dota2.Stats, playResourceEntity *manta.PacketEntity) {
+	steamId := aHeroStats.Steamid
+	for index := 0; index < 10; index++ {
+		indexStr := fmt.Sprintf("m_vecPlayerData.000%d.m_iPlayerSteamID", index)
+		if v, ok := playResourceEntity.FetchUint64(indexStr); ok && v == steamId {
+			if v, ok := playResourceEntity.FetchInt32(fmt.Sprintf("m_vecPlayerTeamData.000%d.m_nSelectedHeroID", index)); ok {
+				Clog("steamid : %v, heroId : %v, %v", steamId, v, reflect.TypeOf(v))
+				aHeroStats.HeroId = uint32(v)
+			}
+
+		}
+	}
 }
