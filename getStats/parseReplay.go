@@ -22,6 +22,8 @@ import (
 
 //modifier_shadow_demon_disruption 毒狗的关 是否加进去还需判断目标是否同一个team
 var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
+//用于计算重复stun时的map add时加入，remove时移出，若attackname不同，则计算两次
+var stunModifier map[uint32]*dota.CMsgDOTACombatLogEntry
 
 func parseReplay(filename string, replayData *ReplayData) error {
 	f, err := os.Open(filename)
@@ -33,16 +35,24 @@ func parseReplay(filename string, replayData *ReplayData) error {
 	if err != nil {
 		return fmt.Errorf("初始化解析器失败: %s", err)
 	}
+	stunModifier = make(map[uint32]*dota.CMsgDOTACombatLogEntry, 0)
 	parser.Callbacks.OnCMsgDOTACombatLogEntry(func(m *dota.CMsgDOTACombatLogEntry) error {
 		logType := m.GetType()
 		switch logType {
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_DAMAGE:
 			replayData.allDamageLogs = append(replayData.allDamageLogs, m)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_REMOVE:
-			//printModifer(m, parser, replayData)
+			//printRemoveModifer(m, parser, replayData)
+			if stunModifier[m.GetInflictorName()] != nil{
+				if m.GetAttackerName() != stunModifier[m.GetInflictorName()].GetAttackerName(){
+					replayData.allModifierLogs = append(replayData.allModifierLogs, stunModifier[m.GetInflictorName()])
+				}
+				delete(stunModifier, m.GetInflictorName())
+			}
 			replayData.allModifierLogs = append(replayData.allModifierLogs, m)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD:
 			//printModifer(m, parser, replayData)
+			stunModifier[m.GetInflictorName()] = m
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GAME_STATE:
 			if m.GetValue() == uint32(5) {
 				replayData.gameStartTime = m.GetTimestamp()
@@ -132,6 +142,13 @@ func printProperties(tag string, ppt *manta.Properties) {
 func printModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData){
 	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() &&!m.GetIsTargetIllusion(){
 		log.Printf("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
+		log.Printf("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
+	}
+}
+
+func printRemoveModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData){
+	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() &&!m.GetIsTargetIllusion(){
+		log.Printf("%v , %v remove %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
 		log.Printf("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
 	}
 }
