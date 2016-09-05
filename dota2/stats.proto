@@ -19,7 +19,7 @@ message Stats {
 	uint32 aloneBeKilledNum = 17;//单场比赛被单杀数量
 	uint32 rGpm = 18;//可靠金钱
 	uint32 unrRpm = 19;//不可靠金钱
-    uint32 killHeroGold = 20;//可靠金钱
-    uint32 deadLoseGold = 21;//不可靠金钱
-    uint32 fedEnemyGold = 22;//不可靠金钱
+    uint32 killHeroGold = 20;//打架获取的金钱
+    uint32 deadLoseGold = 21;//死亡损失金钱
+    uint32 fedEnemyGold = 22;//死亡敌方获取的金钱
 }
