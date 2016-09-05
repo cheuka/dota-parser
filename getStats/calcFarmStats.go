@@ -27,12 +27,13 @@ func calcFarm(replayData *ReplayData) {
 			deadMap[logEntry.GetTimestampRaw()] = logEntry.GetTargetName()
 		}
 	}
-
+	//计算reliable gold 和 unreliable（不包括工资） 金钱的总和
 	for _, logEntry := range replayData.allGoldLogs {
 		reason := logEntry.GetGoldReason()
 		targetName := logEntry.GetTargetName()
-		if allHeroStats[targetName] == nil {
-			return
+		//游戏开始时发的625块不计入GPM里
+		if allHeroStats[targetName] == nil || logEntry.GetTimestamp() < replayData.gameStartTime{
+			continue
 		}
 		switch reason {
 		case 0:
@@ -65,5 +66,13 @@ func calcFarm(replayData *ReplayData) {
 		case 15:
 			allHeroStats[targetName].RGpm += logEntry.GetValue()
 		}
+	}
+	gameTimeSecond := replayData.gameEndTime - replayData.gameStartTime
+
+	for _, v := range allHeroStats {
+		Clog("%v, killGold : %v, death lose gold : %v, fed gold : %v, r gold, %v, un r gold, %v, total gold : %v", v.HeroName,v.KillHeroGold, v.DeadLoseGold, v.FedEnemyGold, v.RGpm, v.UnrRpm, (v.RGpm + v.UnrRpm + uint32((replayData.gameEndTime - replayData.gameStartTime) * 1.666)))
+		v.RGpm = uint32(float32(v.RGpm) / gameTimeSecond * 60)
+		v.UnrRpm = uint32(float32(v.UnrRpm) / gameTimeSecond * 60 + 100)
+		Clog("rgpm : %v, unrpgm : %v, %v", v.RGpm, v.UnrRpm, (v.RGpm + v.UnrRpm))
 	}
 }

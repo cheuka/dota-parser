@@ -41,9 +41,7 @@ func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
 	calcTeamDeath(&replayData)
 	//计算金钱
 	calcFarm(&replayData)
-	for _, v := range allHeroStats {
-		Clog("%v, %v, %v, %v, %v, %v, %v", v.HeroName,v.KillHeroGold, v.DeadLoseGold, v.FedEnemyGold, v.RGpm, v.UnrRpm, (v.RGpm + v.UnrRpm - 625 + uint32((replayData.gameEndTime - replayData.gameStartTime) * 1.666)))
-	}
+
 	return allHeroStats, nil
 }
 

@@ -62,9 +62,6 @@ func parseReplay(filename string, replayData *ReplayData) error {
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GOLD:
 			//加入金钱记录的功能
 			replayData.allGoldLogs = append(replayData.allGoldLogs, m)
-			if m.GetGoldReason() != uint32(13) && m.GetGoldReason() != uint32(0) && m.GetGoldReason() != uint32(11) && m.GetGoldReason() != uint32(6) && m.GetGoldReason() != uint32(2) && m.GetGoldReason() != uint32(14){
-				Clog(m.String())
-			}
 		//printModifer(m, parser, replayData)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GAME_STATE:
 			if m.GetValue() == uint32(5) {
