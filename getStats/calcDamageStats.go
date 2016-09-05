@@ -22,16 +22,28 @@ func calcCreateTotalDamages(replayData *ReplayData) {
 func calcCreateDeadlyDamages(replayData *ReplayData) {
 	for _, deadlyDamagelog := range replayData.allDamageLogs {
 		if deadlyDamagelog.GetHealth() == 0 && isToOpponentHeroCombatLog(deadlyDamagelog) {
+			isAloneKill := true
+			//单杀的attackername
+			damageSourceName := uint32(0)
 			replayData.teamDeath[deadlyDamagelog.GetTargetTeam()]++
 			for _, aDamagelog := range replayData.allDamageLogs {
 				if isHeroToOpponentHeroCombatLog(aDamagelog) && isDamagelogCount(deadlyDamagelog, aDamagelog) {
 					allHeroStats[aDamagelog.GetDamageSourceName()].CreateDeadlyDamages += aDamagelog.GetValue()
+					if damageSourceName == 0 {
+						//如果是英雄伤害，记录attacker
+						damageSourceName = aDamagelog.GetDamageSourceName()
+					}else if damageSourceName != aDamagelog.GetDamageSourceName(){
+						//如果后来有伤害记录和之前的attacker不一样，表示不是单杀
+						isAloneKill = false
+					}
 				}
 			}
 			//记录单杀次数， 判断条件：助攻人数小于等于1， 不是被野怪杀死
-			if len(deadlyDamagelog.AssistPlayers) <= 1 && deadlyDamagelog.GetAttackerTeam() != 4{
-				Clog("%v killed %v alone at %v", allHeroStats[deadlyDamagelog.GetDamageSourceName()].HeroName, allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime))
-				allHeroStats[deadlyDamagelog.GetDamageSourceName()].AloneKilledNum++
+			if len(deadlyDamagelog.AssistPlayers) == 1 && deadlyDamagelog.GetAttackerTeam() != 4 {
+				if _, exist := allHeroStats[damageSourceName]; exist && isAloneKill{
+					Clog("%v killed %v alone at %v", allHeroStats[damageSourceName].HeroName, allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime))
+					allHeroStats[damageSourceName].AloneKilledNum++
+				}
 				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeKilledNum++
 			}
 		}
@@ -44,33 +56,32 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 func isDamagelogCount(deadlyDamagelog, aDamagelog *dota.CMsgDOTACombatLogEntry) bool {
 	aDamagelogTimeStamp := aDamagelog.GetTimestamp()
 	deadlyDamagelogTimeStamp := deadlyDamagelog.GetTimestamp()
-	if aDamagelogTimeStamp <= deadlyDamagelogTimeStamp && aDamagelogTimeStamp >= deadlyDamagelogTimeStamp-17.0 && aDamagelog.GetTargetName() == deadlyDamagelog.GetTargetName() {
+	if aDamagelogTimeStamp <= deadlyDamagelogTimeStamp && aDamagelogTimeStamp >= deadlyDamagelogTimeStamp - 17.0 && aDamagelog.GetTargetName() == deadlyDamagelog.GetTargetName() {
 		return true
 	}
 	return false
 }
 
 //获取敌方死亡次数
-func calcTeamDeath(replayData *ReplayData){
-	for _, heroStates := range allHeroStats{
+func calcTeamDeath(replayData *ReplayData) {
+	for _, heroStates := range allHeroStats {
 		teamNumber := findTeamNumberFromSteamId(heroStates.Steamid, replayData)
-		for opponentTeamNumber, deathNumber := range replayData.teamDeath{
+		for opponentTeamNumber, deathNumber := range replayData.teamDeath {
 			//teamnumber和选手teamnumber不同的时猴，则为敌方死亡次数
-			if opponentTeamNumber != uint32(teamNumber){
+			if opponentTeamNumber != uint32(teamNumber) {
 				heroStates.OpponentHeroDeaths = deathNumber
 			}
 		}
 		heroStates.CreateDeadlyDamagesPerDeath = float32(heroStates.CreateDeadlyDamages) / float32(heroStates.OpponentHeroDeaths)
 		heroStates.CreateDeadlyStiffControlPerDeath = float32(heroStates.CreateDeadlyStiffControl) / float32(heroStates.OpponentHeroDeaths)
 
-
 		Clog("player: %v, hero : %v, opponentdeath : %v, damage perdeath : %v, control per death : %v", heroStates.PlayerName, heroStates.HeroName, heroStates.OpponentHeroDeaths, heroStates.CreateDeadlyDamagesPerDeath, heroStates.CreateDeadlyStiffControlPerDeath)
 	}
 }
 
-func findTeamNumberFromSteamId(steamid uint64, replayData *ReplayData) int32{
+func findTeamNumberFromSteamId(steamid uint64, replayData *ReplayData) int32 {
 	for _, aPlayInfo := range replayData.dotaGameInfo.GetPlayerInfo() {
-		if(aPlayInfo.GetSteamid() == steamid){
+		if (aPlayInfo.GetSteamid() == steamid) {
 			return aPlayInfo.GetGameTeam()
 		}
 	}
