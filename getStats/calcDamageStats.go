@@ -28,6 +28,12 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 					allHeroStats[aDamagelog.GetDamageSourceName()].CreateDeadlyDamages += aDamagelog.GetValue()
 				}
 			}
+			//记录单杀次数， 判断条件：助攻人数小于等于1， 不是被野怪杀死
+			if len(deadlyDamagelog.AssistPlayers) <= 1 && deadlyDamagelog.GetAttackerTeam() != 4{
+				Clog("%v killed %v alone at %v", allHeroStats[deadlyDamagelog.GetDamageSourceName()].HeroName, allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime))
+				allHeroStats[deadlyDamagelog.GetDamageSourceName()].AloneKilledNum++
+				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeKilledNum++
+			}
 		}
 	}
 }

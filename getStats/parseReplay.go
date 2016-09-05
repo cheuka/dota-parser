@@ -59,10 +59,15 @@ func parseReplay(filename string, replayData *ReplayData) error {
 			replayData.allModifierLogs = append(replayData.allModifierLogs, m)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD:
 			replayData.allModifierLogs = append(replayData.allModifierLogs, m)
+		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GOLD:
+			//加入金钱记录的功能
+			replayData.allGoldLogs = append(replayData.allGoldLogs, m)
 		//printModifer(m, parser, replayData)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GAME_STATE:
 			if m.GetValue() == uint32(5) {
 				replayData.gameStartTime = m.GetTimestamp()
+			} else if m.GetValue() == uint32(6) {
+				replayData.gameEndTime = m.GetTimestamp()
 			}
 		}
 		return nil
@@ -152,7 +157,7 @@ func printProperties(tag string, ppt *manta.Properties) {
 
 func printModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData) {
 	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() && !m.GetIsTargetIllusion() {
-		Clog("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp()-replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
+		Clog("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
 		Clog("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
 	}
 }

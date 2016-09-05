@@ -15,4 +15,11 @@ message Stats {
 	uint32 opponent_hero_deaths = 10;//敌方英雄死亡总次数
 	float create_deadly_damages_per_death = 11;//create_deadly_damages/opponent_hero_deaths[单位为点，保留两位小数]
 	float create_deadly_stiff_control_per_death = 12;//create_deadly_stiff_control/opponent_hero_deaths[单位为秒，保留两位小数]
+    uint32 aloneKilledNum = 16;//单场比赛单杀敌方英雄数量
+	uint32 aloneBeKilledNum = 17;//单场比赛被单杀数量
+	uint32 rGpm = 18;//可靠金钱
+	uint32 unrRpm = 19;//不可靠金钱
+    uint32 killHeroGold = 20;//打架获取的金钱
+    uint32 deadLoseGold = 21;//死亡损失金钱
+    uint32 fedEnemyGold = 22;//死亡敌方获取的金钱
 }

@@ -12,9 +12,11 @@ import (
 type ReplayData struct {
 	allDamageLogs   []*dota.CMsgDOTACombatLogEntry
 	allModifierLogs []*dota.CMsgDOTACombatLogEntry
+	allGoldLogs []*dota.CMsgDOTACombatLogEntry
 	dotaGameInfo    *dota.CGameInfo_CDotaGameInfo
 	specialModifier map[int32]*string //需要特殊记录的控制，无getstuntime和issilence，比如斧王的吼
 	gameStartTime   float32
+	gameEndTime   float32
 	teamDeath map[uint32]uint32 //队伍死亡次数， key:team id,value: 死亡次数
 }
 
@@ -37,6 +39,8 @@ func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
 	//计算控制指标至allHeroStats
 	calcCreateDeadlyControl(&replayData)
 	calcTeamDeath(&replayData)
+	//计算金钱
+	calcFarm(&replayData)
 
 	return allHeroStats, nil
 }
