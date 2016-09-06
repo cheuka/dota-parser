@@ -1,6 +1,9 @@
 package getStats
 
-import "github.com/dotabuff/manta/dota"
+import (
+	"github.com/dotabuff/manta/dota"
+	"github.com/dotabuff/manta"
+)
 
 //判断这条战斗记录，（作用）对象是不是对敌方英雄（英雄本体，非幻象、召唤物），需要满足以下全部条件才返回yes；否则返回no
 //[1]TargetName的key在allHeroStats中
@@ -24,3 +27,13 @@ func isHeroToOpponentHeroCombatLog(aCombatLog *dota.CMsgDOTACombatLogEntry) bool
 	}
 	return false
 }
+
+func fetchProperties(key string, entity *manta.PacketEntity) interface{}{
+	value, exist := entity.Fetch(key)
+	if exist{
+		return value
+	}
+
+	return nil
+}
+

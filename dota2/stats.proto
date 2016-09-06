@@ -17,9 +17,12 @@ message Stats {
 	float create_deadly_stiff_control_per_death = 12;//create_deadly_stiff_control/opponent_hero_deaths[单位为秒，保留两位小数]
     uint32 aloneKilledNum = 16;//单场比赛单杀敌方英雄数量
 	uint32 aloneBeKilledNum = 17;//单场比赛被单杀数量
-	uint32 rGpm = 18;//可靠金钱
-	uint32 unrRpm = 19;//不可靠金钱
-    uint32 killHeroGold = 20;//打架获取的金钱
-    uint32 deadLoseGold = 21;//死亡损失金钱
-    uint32 fedEnemyGold = 22;//死亡敌方获取的金钱
+	int32 aloneBeCatchedNum = 18; //单场比赛被抓次数
+	uint32 rGpm = 19;//可靠金钱
+	uint32 unrRpm = 20;//不可靠金钱
+    uint32 killHeroGold = 21;//打架获取的金钱
+    uint32 deadLoseGold = 22;//死亡损失金钱
+    uint32 fedEnemyGold = 23;//死亡敌方获取的金钱
+    int32 teamNumber = 24; //选手的队伍
+	
 }
