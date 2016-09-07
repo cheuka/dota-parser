@@ -85,7 +85,7 @@ func isAloneCatched(log *dota.CMsgDOTACombatLogEntry, replayData *ReplayData) bo
 	if heroStats, exists := allHeroStats[targetName]; exists {
 		for teamMateName, teamMateHero := range allHeroStats {
 			if teamMateName != targetName && heroStats.TeamNumber == teamMateHero.TeamNumber {
-				isAlone = !isNear(targetName, teamMateName, int32(log.GetTimestamp()), replayData)
+				isAlone = !isNear(targetName, teamMateName, int32(log.GetTimestampRaw()), replayData)
 				if !isAlone {
 					break
 				}
@@ -100,8 +100,8 @@ func isNear(targetName uint32, teamMate uint32, time int32, replayData *ReplayDa
 	near := false
 	targetPosition, exist := findPosition(targetName, time, replayData)
 	teamMatePosition, exist2 := findPosition(teamMate, time, replayData)
-	Clog("%v, isNear %v, %v, %v", timeStampToString(float32(time) - replayData.gameStartTime), allHeroStats[targetName].HeroName, allHeroStats[teamMate].HeroName, getDistance(targetPosition.Cell_X, targetPosition.Cell_Y, teamMatePosition.Cell_X, teamMatePosition.Cell_Y))
-	Clog("%v, isNear %v, %v, %v, %v", timeStampToString(float32(time) - replayData.gameStartTime), targetPosition.Cell_X, targetPosition.Cell_Y, teamMatePosition.Cell_X, teamMatePosition.Cell_Y)
+	//Clog("%v, isNear %v, %v, %v", timeStampToString(float32(time) - replayData.gameStartTime), allHeroStats[targetName].HeroName, allHeroStats[teamMate].HeroName, getDistance(targetPosition.Cell_X, targetPosition.Cell_Y, teamMatePosition.Cell_X, teamMatePosition.Cell_Y))
+	//Clog("%v, isNear %v, %v, %v, %v", timeStampToString(float32(time) - replayData.gameStartTime), targetPosition.Cell_X, targetPosition.Cell_Y, teamMatePosition.Cell_X, teamMatePosition.Cell_Y)
 	//Clog("%v, %v", exist, exist2)
 	if exist && exist2 {
 		//Clog("%v, isNearInDistance %v, %v, %v, %v", time, targetName, teamMate, targetPosition.Cell_X, teamMatePosition.Cell_X)
