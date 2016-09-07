@@ -24,7 +24,7 @@ import (
 //modifier_shadow_demon_disruption 毒狗的关 是否加进去还需判断目标是否同一个team
 var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
 
-//m_vecPlayerTeamData
+//playResourceEntity : m_vecPlayerTeamData
 //0001
 //2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_flTeamFightParticipation : 0.25
 //2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_hSelectedHero : 10142214
@@ -62,7 +62,6 @@ func parseReplay(filename string, replayData *ReplayData) error {
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GOLD:
 			//加入金钱记录的功能
 			replayData.allGoldLogs = append(replayData.allGoldLogs, m)
-		//printModifer(m, parser, replayData)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GAME_STATE:
 			if m.GetValue() == uint32(5) {
 				replayData.gameStartTime = m.GetTimestamp()
