@@ -74,14 +74,14 @@ func isModifierlogCount(replayData *ReplayData, deadlyDamagelog, aModifierLog *d
 	if modifierTimeStamp <= deadlyDamagelogTimeStamp+float32(1) && modifierTimeStamp >= deadlyDamagelogTimeStamp-17.0 && aModifierLog.GetTargetName() == deadlyDamagelog.GetTargetName() {
 		//remove记录根据add记录来判断是否为控制技能
 		if _, isExist := addModifierMap[aModifierLog.GetInflictorName()]; isExist && aModifierLog.GetType() == dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_REMOVE {
-			printControlDetail(replayData, aModifierLog)
+			//printControlDetail(replayData, aModifierLog)
 			return true
 		}
 		//stun时间大于0或者是沉默技能或者在控制列表里
 		if aModifierLog.GetStunDuration() > float32(0) || aModifierLog.GetSilenceModifier() || replayData.specialModifier[int32(aModifierLog.GetInflictorName())] != nil {
 			//add记录判断是否为控制技能
 			if aModifierLog.GetType() == dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_MODIFIER_ADD {
-				printControlDetail(replayData, aModifierLog)
+				//printControlDetail(replayData, aModifierLog)
 			}
 			return true
 		}

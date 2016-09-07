@@ -26,6 +26,7 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 			//单杀的attackername
 			damageSourceName := uint32(0)
 			replayData.teamDeath[deadlyDamagelog.GetTargetTeam()]++
+			isAloneCatch := true
 			for _, aDamagelog := range replayData.allDamageLogs {
 				if isHeroToOpponentHeroCombatLog(aDamagelog) && isDamagelogCount(deadlyDamagelog, aDamagelog) {
 					allHeroStats[aDamagelog.GetDamageSourceName()].CreateDeadlyDamages += aDamagelog.GetValue()
@@ -36,8 +37,19 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 						//如果后来有伤害记录和之前的attacker不一样，表示不是单杀
 						isAloneKill = false
 					}
+					//如果判断标志true， 继续判断这一条记录，如果false 说明不是单抓，不再记录
+					if  isAloneCatch {
+						isAloneCatch = isAloneCatched(aDamagelog, replayData)
+					}
+
 				}
 			}
+
+			if isAloneCatch {
+				Clog("%v : %v is alone catched", timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime),  allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
+				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeCatchedNum++
+			}
+
 			//记录单杀次数， 判断条件：助攻人数小于等于1， 不是被野怪杀死
 			if len(deadlyDamagelog.AssistPlayers) == 1 && deadlyDamagelog.GetAttackerTeam() != 4 {
 				if _, exist := allHeroStats[damageSourceName]; exist && isAloneKill{
