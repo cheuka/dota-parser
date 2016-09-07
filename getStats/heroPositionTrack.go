@@ -42,13 +42,13 @@ func recordHeroPosition(parser *manta.Parser, entity *manta.PacketEntity, pet ma
 		heroTackerMap := make(map[int32]*HeroPosition, 0)
 		replaydata.heroTackerMap[entity.Index] = heroTackerMap
 	}
-	if entity.Index == int32(404){
-		cellX, _ := entity.FetchUint64("CBodyComponentBaseAnimatingOverlay.m_cellX")
-		cellY, _ := entity.FetchUint64("CBodyComponentBaseAnimatingOverlay.m_cellY")
-		vecX, _ := entity.FetchFloat32("CBodyComponentBaseAnimatingOverlay.m_vecX")
-		vecY, _ := entity.FetchFloat32("CBodyComponentBaseAnimatingOverlay.m_vecY")
-		Clog("entity.Index : %v, %v, %v, %v, %v, %v",  int32(parser.NetTick / 30), timeStampToString(float32(parser.NetTick / 30) - replaydata.gameStartTime), cellX, cellY, vecX, vecY)
-	}
+	//if entity.Index == int32(404){
+	//	cellX, _ := entity.FetchUint64("CBodyComponentBaseAnimatingOverlay.m_cellX")
+	//	cellY, _ := entity.FetchUint64("CBodyComponentBaseAnimatingOverlay.m_cellY")
+	//	vecX, _ := entity.FetchFloat32("CBodyComponentBaseAnimatingOverlay.m_vecX")
+	//	vecY, _ := entity.FetchFloat32("CBodyComponentBaseAnimatingOverlay.m_vecY")
+	//	Clog("entity.Index : %v, %v, %v, %v, %v, %v",  int32(parser.NetTick / 30), timeStampToString(float32(parser.NetTick / 30) - replaydata.gameStartTime), cellX, cellY, vecX, vecY)
+	//}
 	//在英雄entity的位置更新的时候记录下来，为避免数据量过大，以second为单位记录
 	//NetTick为 tick rate， 和timestamp 1：30
 	if _, exist := replaydata.heroTackerMap[entity.Index]; exist && pet == manta.EntityEventType_Update {
@@ -98,9 +98,10 @@ func isAloneCatched(log *dota.CMsgDOTACombatLogEntry, replayData *ReplayData) bo
 //判断是否在指定距离之内
 func isNear(targetName uint32, teamMate uint32, time int32, replayData *ReplayData) bool {
 	near := false
-	//Clog("%v, isNear %v, %v, %v, %v", time, targetName, teamMate, replayData.heroMap[targetName], replayData.heroMap[teamMate])
-	targetPosition, exist := replayData.heroTackerMap[replayData.heroIndexMap[replayData.heroMap[targetName]]][time]
-	teamMatePosition, exist2 := replayData.heroTackerMap[replayData.heroIndexMap[replayData.heroMap[teamMate]]][time]
+	targetPosition, exist := findPosition(targetName, time, replayData)
+	teamMatePosition, exist2 := findPosition(teamMate, time, replayData)
+	Clog("%v, isNear %v, %v, %v", timeStampToString(float32(time) - replayData.gameStartTime), allHeroStats[targetName].HeroName, allHeroStats[teamMate].HeroName, getDistance(targetPosition.Cell_X, targetPosition.Cell_Y, teamMatePosition.Cell_X, teamMatePosition.Cell_Y))
+	Clog("%v, isNear %v, %v, %v, %v", timeStampToString(float32(time) - replayData.gameStartTime), targetPosition.Cell_X, targetPosition.Cell_Y, teamMatePosition.Cell_X, teamMatePosition.Cell_Y)
 	//Clog("%v, %v", exist, exist2)
 	if exist && exist2 {
 		//Clog("%v, isNearInDistance %v, %v, %v, %v", time, targetName, teamMate, targetPosition.Cell_X, teamMatePosition.Cell_X)
@@ -121,4 +122,21 @@ func isNearInDistance(targetPosition *HeroPosition, teamMatePosition *HeroPositi
 	//targetPosition.Cell_X - teamMatePosition.Cell_X
 	//targetPosition.Cell_Y - teamMatePosition.Cell_Y
 	return near
+}
+
+func getDistance(cell1X, cell1Y, cell2X, cell2Y int32) int32{
+	return int32(math.Sqrt(math.Pow(float64(cell1X - cell2X), float64(2)) + math.Pow(float64(cell1Y - cell2Y), float64(2))))
+}
+
+func findPosition(targetName uint32, time int32, replayData *ReplayData) (*HeroPosition,bool){
+	caculateTime := time;
+	for {
+		targetPosition, exist := replayData.heroTackerMap[replayData.heroIndexMap[replayData.heroMap[targetName]]][caculateTime]
+		if exist {
+			return  targetPosition,true
+		}else{
+			caculateTime--
+		}
+	}
+	return nil,false
 }

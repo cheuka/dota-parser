@@ -6,7 +6,6 @@ import (
 	"new_stats/dota2"
 
 	"github.com/dotabuff/manta/dota"
-	"strconv"
 )
 
 //ReplayData 用于存放解析录像时，从回调函数中获取到的数据
@@ -48,7 +47,6 @@ func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
 	calcTeamDeath(&replayData)
 	//计算金钱
 	calcFarm(&replayData)
-	printIntKeyMaps(strconv.Itoa(404), replayData.heroTackerMap[404])
 	return allHeroStats, nil
 }
 
