@@ -1,10 +1,11 @@
 package getStats
 
 import (
-	"github.com/dotabuff/manta"
-	"strings"
-	"github.com/dotabuff/manta/dota"
 	"math"
+	"strings"
+
+	"github.com/dotabuff/manta"
+	"github.com/dotabuff/manta/dota"
 )
 
 //英雄位置的记录
@@ -23,6 +24,7 @@ type HeroPosition struct {
 	Vec_Y   float32
 	NetTick uint32
 }
+
 //2016/09/05 22:27:35 baseLine : , CBodyComponentBaseAnimatingOverlay.m_cellX : 74
 //2016/09/05 22:27:35 baseLine : , CBodyComponentBaseAnimatingOverlay.m_cellY : 74
 //2016/09/05 22:27:35 baseLine : , CBodyComponentBaseAnimatingOverlay.m_cellZ : 132
@@ -31,8 +33,10 @@ type HeroPosition struct {
 //2016/09/05 22:27:35 baseLine : , CBodyComponentBaseAnimatingOverlay.m_vecZ : 0
 func recordHeroPosition(parser *manta.Parser, entity *manta.PacketEntity, pet manta.EntityEventType, replaydata *ReplayData) {
 	//在英雄entity创建的时候创建map关系
-	if len(replaydata.heroTackerMap) < 10 && pet == manta.EntityEventType_Create && strings.Contains(entity.ClassName, "CDOTA_Unit_Hero") {
-		Clog("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, entity.Index, timeStampToString(float32(parser.NetTick) / 30))
+	// 看是否有力量这个属性来判断是否是英雄，防止类似兽王的召唤物，暂时先用这个来解决bug，将来找到更加准确的字段再替换
+	_, isHero := entity.FetchFloat32("m_flStrength")
+	if len(replaydata.heroTackerMap) < 10 && pet == manta.EntityEventType_Create && strings.Contains(entity.ClassName, "CDOTA_Unit_Hero") && isHero {
+		Clog("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, entity.Index, timeStampToString(float32(parser.NetTick)/30))
 		//printProperties("baseLine : ", entity.ClassBaseline)
 		//printProperties("properties : ", entity.Properties)
 		//Clog("\n\n")
@@ -67,11 +71,11 @@ func recordHeroPosition(parser *manta.Parser, entity *manta.PacketEntity, pet ma
 			hPosition.NetTick = parser.NetTick
 		} else {
 			replaydata.heroTackerMap[entity.Index][timeStampInt] = &HeroPosition{
-				Cell_X : int32(cellX),
-				Cell_Y : int32(cellY),
-				Vec_X :  vecX,
-				Vec_Y :  vecY,
-				NetTick : parser.NetTick,
+				Cell_X:  int32(cellX),
+				Cell_Y:  int32(cellY),
+				Vec_X:   vecX,
+				Vec_Y:   vecY,
+				NetTick: parser.NetTick,
 			}
 		}
 	}
@@ -113,9 +117,9 @@ func isNear(targetName uint32, teamMate uint32, time int32, replayData *ReplayDa
 //计算实际距离，此处以缩放128为标准，待之后得到更加准确的信息之后再更改
 func isNearInDistance(targetPosition *HeroPosition, teamMatePosition *HeroPosition) bool {
 	near := false
-	distance := int32(math.Sqrt(math.Pow(float64(targetPosition.Cell_X - teamMatePosition.Cell_X), float64(2)) + math.Pow(float64(targetPosition.Cell_Y - teamMatePosition.Cell_Y), float64(2))))
+	distance := int32(math.Sqrt(math.Pow(float64(targetPosition.Cell_X-teamMatePosition.Cell_X), float64(2)) + math.Pow(float64(targetPosition.Cell_Y-teamMatePosition.Cell_Y), float64(2))))
 	distance = distance * 128
-	if distance < 1300{
+	if distance < 1300 {
 		near = true
 	}
 	//Clog("distance : %v", distance)
@@ -124,19 +128,23 @@ func isNearInDistance(targetPosition *HeroPosition, teamMatePosition *HeroPositi
 	return near
 }
 
-func getDistance(cell1X, cell1Y, cell2X, cell2Y int32) int32{
-	return int32(math.Sqrt(math.Pow(float64(cell1X - cell2X), float64(2)) + math.Pow(float64(cell1Y - cell2Y), float64(2))))
+func getDistance(cell1X, cell1Y, cell2X, cell2Y int32) int32 {
+	return int32(math.Sqrt(math.Pow(float64(cell1X-cell2X), float64(2)) + math.Pow(float64(cell1Y-cell2Y), float64(2))))
 }
 
-func findPosition(targetName uint32, time int32, replayData *ReplayData) (*HeroPosition,bool){
-	caculateTime := time;
+func findPosition(targetName uint32, time int32, replayData *ReplayData) (*HeroPosition, bool) {
+	caculateTime := time
 	for {
 		targetPosition, exist := replayData.heroTackerMap[replayData.heroIndexMap[replayData.heroMap[targetName]]][caculateTime]
 		if exist {
-			return  targetPosition,true
-		}else{
+			return targetPosition, true
+		} else {
 			caculateTime--
 		}
+		if caculateTime <= 0 {
+			Clog("findposition error: %v, %v, %v", targetName, allHeroStats[targetName].HeroName, time)
+			break
+		}
 	}
-	return nil,false
+	return nil, false
 }
