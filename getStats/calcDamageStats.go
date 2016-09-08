@@ -44,20 +44,15 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 				}
 			}
 
-<<<<<<< HEAD
-			if isAloneCatch && deadlyDamagelog.GetAttackerTeam() != 4{
-				Clog("%v : %v is alone catched", timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime),  allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
-=======
 			if isAloneCatch && deadlyDamagelog.GetAttackerTeam() != 4 {
-				Clog("%v : %v is alone catched", timeStampToString(deadlyDamagelog.GetTimestamp()-replayData.gameStartTime), allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
->>>>>>> heqiuzhi-master
+				Clog("%v : %v is alone catched", timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime), allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
 				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeCatchedNum++
 			}
 
 			//记录单杀次数， 判断条件：助攻人数小于等于1， 不是被野怪杀死
 			if len(deadlyDamagelog.AssistPlayers) == 1 && deadlyDamagelog.GetAttackerTeam() != 4 {
 				if _, exist := allHeroStats[damageSourceName]; exist && isAloneKill {
-					Clog("%v killed %v alone at %v", allHeroStats[damageSourceName].HeroName, allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, timeStampToString(deadlyDamagelog.GetTimestamp()-replayData.gameStartTime))
+					Clog("%v killed %v alone at %v", allHeroStats[damageSourceName].HeroName, allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime))
 					allHeroStats[damageSourceName].AloneKilledNum++
 				}
 				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeKilledNum++
@@ -72,7 +67,7 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 func isDamagelogCount(deadlyDamagelog, aDamagelog *dota.CMsgDOTACombatLogEntry) bool {
 	aDamagelogTimeStamp := aDamagelog.GetTimestamp()
 	deadlyDamagelogTimeStamp := deadlyDamagelog.GetTimestamp()
-	if aDamagelogTimeStamp <= deadlyDamagelogTimeStamp && aDamagelogTimeStamp >= deadlyDamagelogTimeStamp-17.0 && aDamagelog.GetTargetName() == deadlyDamagelog.GetTargetName() {
+	if aDamagelogTimeStamp <= deadlyDamagelogTimeStamp && aDamagelogTimeStamp >= deadlyDamagelogTimeStamp - 17.0 && aDamagelog.GetTargetName() == deadlyDamagelog.GetTargetName() {
 		return true
 	}
 	return false
