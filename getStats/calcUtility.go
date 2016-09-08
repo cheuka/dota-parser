@@ -1,6 +1,10 @@
 package getStats
 
-import "github.com/dotabuff/manta/dota"
+import (
+	"github.com/dotabuff/manta/dota"
+	"github.com/dotabuff/manta"
+	"sort"
+)
 
 //判断这条战斗记录，（作用）对象是不是对敌方英雄（英雄本体，非幻象、召唤物），需要满足以下全部条件才返回yes；否则返回no
 //[1]TargetName的key在allHeroStats中
@@ -23,4 +27,34 @@ func isHeroToOpponentHeroCombatLog(aCombatLog *dota.CMsgDOTACombatLogEntry) bool
 		return true
 	}
 	return false
+}
+
+func fetchProperties(key string, entity *manta.PacketEntity) interface{}{
+	value, exist := entity.Fetch(key)
+	if exist{
+		return value
+	}
+
+	return nil
+}
+
+func printIntKeyMaps(tag string, maps map[int32]*HeroPosition) {
+	sorted_keys := make([]int, 0)
+	for k, _ := range maps {
+		sorted_keys = append(sorted_keys, int(k))
+	}
+
+	// sort 'string' key in increasing order
+	sort.Ints(sorted_keys)
+
+	lastK := 0
+	inCountinudNum := 0
+	for _, k := range sorted_keys {
+		if k > 0 && k - lastK > 1{
+			Clog("%v, in continued : %v, %v", tag, k, k - lastK)
+			inCountinudNum++
+		}
+		lastK = k
+	}
+	Clog("%v, in continued number : %v", tag, inCountinudNum)
 }

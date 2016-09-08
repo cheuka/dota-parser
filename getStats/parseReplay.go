@@ -24,7 +24,7 @@ import (
 //modifier_shadow_demon_disruption 毒狗的关 是否加进去还需判断目标是否同一个team
 var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
 
-//m_vecPlayerTeamData
+//playResourceEntity : m_vecPlayerTeamData
 //0001
 //2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_flTeamFightParticipation : 0.25
 //2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_hSelectedHero : 10142214
@@ -62,7 +62,6 @@ func parseReplay(filename string, replayData *ReplayData) error {
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GOLD:
 			//加入金钱记录的功能
 			replayData.allGoldLogs = append(replayData.allGoldLogs, m)
-		//printModifer(m, parser, replayData)
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_GAME_STATE:
 			if m.GetValue() == uint32(5) {
 				replayData.gameStartTime = m.GetTimestamp()
@@ -77,7 +76,6 @@ func parseReplay(filename string, replayData *ReplayData) error {
 		Clog(m.String())
 		return nil
 	})
-
 	parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
 
 		if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
@@ -92,6 +90,8 @@ func parseReplay(filename string, replayData *ReplayData) error {
 		//		Clog("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
 		//	}
 		//}
+		recordHeroPosition(parser, entity, pet, replayData)
+
 		return nil
 	})
 	parser.Start()                       //开始解析录像
@@ -128,12 +128,13 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 		return fmt.Errorf("无法从combatLog中找到十个英雄的index")
 	}
 	for _, aPlayInfo := range replayData.dotaGameInfo.GetPlayerInfo() {
-		for _, aHeroStats := range allHeroStats {
+		for combatLogName, aHeroStats := range allHeroStats {
 			if strings.Contains(aPlayInfo.GetHeroName(), aHeroStats.HeroName) {
 				aHeroStats.Steamid = aPlayInfo.GetSteamid()
 				aHeroStats.MatchId = replayData.dotaGameInfo.GetMatchId()
 				aHeroStats.PlayerName = aPlayInfo.GetPlayerName()
-				getHeroIdFromSteamId(aHeroStats, playResourceEntity)
+				aHeroStats.TeamNumber = aPlayInfo.GetGameTeam()
+				getHeroIdFromSteamId(combatLogName, replayData, aHeroStats, playResourceEntity)
 			}
 		}
 	}
@@ -151,7 +152,7 @@ func printProperties(tag string, ppt *manta.Properties) {
 	sort.Strings(sorted_keys)
 
 	for _, k := range sorted_keys {
-		Clog("%v, %v : %v\n", tag, k, ppt.KV[k])
+		Clog("%v, %v : %v, %v\n", tag, k, ppt.KV[k], reflect.TypeOf(ppt.KV[k]))
 	}
 }
 
@@ -176,14 +177,17 @@ func lookForName(parser *manta.Parser, index uint32) string {
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerSteamID : 76561198046993283
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
 //根据steamId 获取英雄ID
-func getHeroIdFromSteamId(aHeroStats *dota2.Stats, playResourceEntity *manta.PacketEntity) {
+func getHeroIdFromSteamId(combatLogName uint32, replayData *ReplayData, aHeroStats *dota2.Stats, playResourceEntity *manta.PacketEntity) {
 	steamId := aHeroStats.Steamid
 	for index := 0; index < 10; index++ {
 		indexStr := fmt.Sprintf("m_vecPlayerData.000%d.m_iPlayerSteamID", index)
 		if v, ok := playResourceEntity.FetchUint64(indexStr); ok && v == steamId {
 			if v, ok := playResourceEntity.FetchInt32(fmt.Sprintf("m_vecPlayerTeamData.000%d.m_nSelectedHeroID", index)); ok {
-				Clog("steamid : %v, heroId : %v, %v", steamId, v, reflect.TypeOf(v))
 				aHeroStats.HeroId = uint32(v)
+				if selectHero, ok := playResourceEntity.FetchUint32(fmt.Sprintf("m_vecPlayerTeamData.000%d.m_hSelectedHero", index)); ok {
+					replayData.heroMap[combatLogName] = selectHero
+					Clog("steamid : %v, heroId : %v, %v, %v", steamId, v, reflect.TypeOf(v), selectHero)
+				}
 			}
 
 		}
