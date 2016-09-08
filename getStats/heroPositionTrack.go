@@ -31,7 +31,9 @@ type HeroPosition struct {
 //2016/09/05 22:27:35 baseLine : , CBodyComponentBaseAnimatingOverlay.m_vecZ : 0
 func recordHeroPosition(parser *manta.Parser, entity *manta.PacketEntity, pet manta.EntityEventType, replaydata *ReplayData) {
 	//在英雄entity创建的时候创建map关系
-	if len(replaydata.heroTackerMap) < 10 && pet == manta.EntityEventType_Create && strings.Contains(entity.ClassName, "CDOTA_Unit_Hero") {
+	// 看是否有力量这个属性来判断是否是英雄，防止类似兽王的召唤物，暂时先用这个来解决bug，将来找到更加准确的字段再替换
+	_, isHero := entity.FetchFloat32("m_flStrength")
+	if len(replaydata.heroTackerMap) < 10 && pet == manta.EntityEventType_Create && strings.Contains(entity.ClassName, "CDOTA_Unit_Hero") && isHero{
 		Clog("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, entity.Index, timeStampToString(float32(parser.NetTick) / 30))
 		//printProperties("baseLine : ", entity.ClassBaseline)
 		//printProperties("properties : ", entity.Properties)
@@ -136,6 +138,10 @@ func findPosition(targetName uint32, time int32, replayData *ReplayData) (*HeroP
 			return  targetPosition,true
 		}else{
 			caculateTime--
+		}
+		if caculateTime <= 0{
+			Clog("findposition error: %v, %v, %v", targetName, allHeroStats[targetName].HeroName, time)
+			break
 		}
 	}
 	return nil,false

@@ -45,7 +45,7 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 				}
 			}
 
-			if isAloneCatch {
+			if isAloneCatch && deadlyDamagelog.GetAttackerTeam() != 4{
 				Clog("%v : %v is alone catched", timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime),  allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
 				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeCatchedNum++
 			}
