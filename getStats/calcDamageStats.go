@@ -4,7 +4,6 @@ import (
 	"github.com/dotabuff/manta/dota"
 )
 
-
 //统计每个英雄的造成的总输出： CreateTotalDamages
 //有BUG：冰魂给队友套BUFF之后，队友平A造成的伤害，算在队友身上，而不是冰魂（和dotabuff不一致）
 func calcCreateTotalDamages(replayData *ReplayData) {
@@ -33,27 +32,27 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 					if damageSourceName == 0 {
 						//如果是英雄伤害，记录attacker
 						damageSourceName = aDamagelog.GetDamageSourceName()
-					}else if damageSourceName != aDamagelog.GetDamageSourceName(){
+					} else if damageSourceName != aDamagelog.GetDamageSourceName() {
 						//如果后来有伤害记录和之前的attacker不一样，表示不是单杀
 						isAloneKill = false
 					}
 					//如果判断标志true， 继续判断这一条记录，如果false 说明不是单抓，不再记录
-					if  isAloneCatch {
+					if isAloneCatch {
 						isAloneCatch = isAloneCatched(aDamagelog, replayData)
 					}
 
 				}
 			}
 
-			if isAloneCatch {
-				Clog("%v : %v is alone catched", timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime),  allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
+			if isAloneCatch && deadlyDamagelog.GetAttackerTeam() != 4 {
+				Clog("%v : %v is alone catched", timeStampToString(deadlyDamagelog.GetTimestamp()-replayData.gameStartTime), allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
 				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeCatchedNum++
 			}
 
 			//记录单杀次数， 判断条件：助攻人数小于等于1， 不是被野怪杀死
 			if len(deadlyDamagelog.AssistPlayers) == 1 && deadlyDamagelog.GetAttackerTeam() != 4 {
-				if _, exist := allHeroStats[damageSourceName]; exist && isAloneKill{
-					Clog("%v killed %v alone at %v", allHeroStats[damageSourceName].HeroName, allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime))
+				if _, exist := allHeroStats[damageSourceName]; exist && isAloneKill {
+					Clog("%v killed %v alone at %v", allHeroStats[damageSourceName].HeroName, allHeroStats[deadlyDamagelog.GetTargetName()].HeroName, timeStampToString(deadlyDamagelog.GetTimestamp()-replayData.gameStartTime))
 					allHeroStats[damageSourceName].AloneKilledNum++
 				}
 				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeKilledNum++
@@ -68,7 +67,7 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 func isDamagelogCount(deadlyDamagelog, aDamagelog *dota.CMsgDOTACombatLogEntry) bool {
 	aDamagelogTimeStamp := aDamagelog.GetTimestamp()
 	deadlyDamagelogTimeStamp := deadlyDamagelog.GetTimestamp()
-	if aDamagelogTimeStamp <= deadlyDamagelogTimeStamp && aDamagelogTimeStamp >= deadlyDamagelogTimeStamp - 17.0 && aDamagelog.GetTargetName() == deadlyDamagelog.GetTargetName() {
+	if aDamagelogTimeStamp <= deadlyDamagelogTimeStamp && aDamagelogTimeStamp >= deadlyDamagelogTimeStamp-17.0 && aDamagelog.GetTargetName() == deadlyDamagelog.GetTargetName() {
 		return true
 	}
 	return false
@@ -93,7 +92,7 @@ func calcTeamDeath(replayData *ReplayData) {
 
 func findTeamNumberFromSteamId(steamid uint64, replayData *ReplayData) int32 {
 	for _, aPlayInfo := range replayData.dotaGameInfo.GetPlayerInfo() {
-		if (aPlayInfo.GetSteamid() == steamid) {
+		if aPlayInfo.GetSteamid() == steamid {
 			return aPlayInfo.GetGameTeam()
 		}
 	}
