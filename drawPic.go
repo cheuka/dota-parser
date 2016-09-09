@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"math/rand"
 
 	"github.com/gonum/plot"
@@ -9,47 +10,42 @@ import (
 )
 
 func draw() {
-	// Get some data to display in our plot.
 	rand.Seed(int64(0))
-	n := 10
-	uniform := make(plotter.Values, n)
-	normal := make(plotter.Values, n)
-	expon := make(plotter.Values, n)
-	for i := 0; i < n; i++ {
-		uniform[i] = rand.Float64()
-		normal[i] = rand.NormFloat64()
-		expon[i] = rand.ExpFloat64()
-	}
+	n := 1
+	bubbleData := randomTriples(n)
 
-	// Create the plot and set its title and axis label.
 	p, err := plot.New()
 	if err != nil {
 		panic(err)
 	}
-	p.Title.Text = "Quartile plots"
-	p.Y.Label.Text = "Values"
+	p.Title.Text = "Bubbles"
+	p.X.Label.Text = "X"
+	p.Y.Label.Text = "Y"
 
-	// Make boxes for our data and add them to the plot.
-	q0, err := plotter.NewQuartPlot(0, uniform)
+	bs, err := plotter.NewBubbles(bubbleData, vg.Points(1), vg.Points(20))
 	if err != nil {
 		panic(err)
 	}
-	q1, err := plotter.NewQuartPlot(1, normal)
-	if err != nil {
-		panic(err)
-	}
-	q2, err := plotter.NewQuartPlot(2, expon)
-	if err != nil {
-		panic(err)
-	}
-	p.Add(q0, q1, q2)
+	bs.Color = color.RGBA{R: 196, B: 128, A: 255}
+	p.Add(bs)
 
-	// Set the X axis of the plot to nominal with
-	// the given names for x=0, x=1 and x=2.
-	p.NominalX("Uniform\nDistribution", "Normal\nDistribution",
-		"Exponential\nDistribution")
-
-	if err := p.Save(3*vg.Inch, 4*vg.Inch, "quartile.png"); err != nil {
+	if err := p.Save(4*vg.Inch, 4*vg.Inch, "1234567.png"); err != nil {
 		panic(err)
 	}
+}
+
+// randomTriples returns some random x, y, z triples
+// with some interesting kind of trend.
+func randomTriples(n int) plotter.XYZs {
+	data := make(plotter.XYZs, n)
+	for i := range data {
+		if i == 0 {
+			data[i].X = rand.Float64()
+		} else {
+			data[i].X = data[i-1].X + 2*rand.Float64()
+		}
+		data[i].Y = data[i].X + 10*rand.Float64()
+		data[i].Z = data[i].X
+	}
+	return data
 }
