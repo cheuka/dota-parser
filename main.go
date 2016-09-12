@@ -1,10 +1,13 @@
 package main
 
 import (
+	"compress/bzip2"
+	"io"
 	"io/ioutil"
 	"log"
 	"new_stats/dota2"
 	"new_stats/getStats"
+	"os"
 	"strconv"
 	"strings"
 
@@ -14,10 +17,37 @@ import (
 
 func main() {
 
+	demFileName := decompressBzip2ToDemFile("C:/2545299883.dem.bz2")
+	textAGame(demFileName)
 	//textAGame("C:/TI6/2545101126.dem")
 
-	//	writeToDB("root:123456@/dota2_new_stats?charset=utf8&parseTime=True&loc=Local", "C:/TI6/")
-	writeToDB("root:123456@/dota2_new_stats_for_cn?charset=utf8&parseTime=True&loc=Local", "D:/replays/")
+	//writeToDB("root:123456@/dota2_new_stats?charset=utf8&parseTime=True&loc=Local", "C:/TI6/")
+	//writeToDB("root:123456@/dota2_new_stats_for_cn?charset=utf8&parseTime=True&loc=Local", "D:/replays/")
+
+}
+
+func decompressBzip2ToDemFile(bz2FileName string) string {
+	var demFileName string
+	demFileName = strings.TrimSuffix(bz2FileName, ".bz2")
+
+	bizFile, err := os.Open(bz2FileName)
+	if err != nil {
+		log.Fatalf("打开录像压缩文件失败: %s", err)
+	}
+	defer bizFile.Close()
+
+	demFile, err := os.Create(demFileName)
+	if err != nil {
+		log.Fatalf("创建录像文件失败: %s", err)
+	}
+
+	bzip2Reader := bzip2.NewReader(bizFile)
+	if err != nil {
+		log.Fatalf("解压录像文件失败: %s", err)
+	}
+
+	io.Copy(demFile, bzip2Reader)
+	return demFileName
 
 }
 
