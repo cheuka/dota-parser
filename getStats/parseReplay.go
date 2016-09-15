@@ -2,7 +2,7 @@ package getStats
 
 import (
 	"fmt"
-	"new_stats/dota2"
+	"../dota2"
 	"os"
 	"strings"
 
@@ -127,6 +127,7 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 	if len(allHeroStats) != 10 {
 		return fmt.Errorf("无法从combatLog中找到十个英雄的index")
 	}
+	winTeam := replayData.dotaGameInfo.GetGameWinner()
 	for _, aPlayInfo := range replayData.dotaGameInfo.GetPlayerInfo() {
 		for combatLogName, aHeroStats := range allHeroStats {
 			if strings.Contains(aPlayInfo.GetHeroName(), aHeroStats.HeroName) {
@@ -134,6 +135,11 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 				aHeroStats.MatchId = replayData.dotaGameInfo.GetMatchId()
 				aHeroStats.PlayerName = aPlayInfo.GetPlayerName()
 				aHeroStats.TeamNumber = aPlayInfo.GetGameTeam()
+				if aPlayInfo.GetGameTeam() == winTeam{
+					aHeroStats.IsWin = true
+				}else{
+					aHeroStats.IsWin = false
+				}
 				getHeroIdFromSteamId(combatLogName, replayData, aHeroStats, playResourceEntity)
 			}
 		}

@@ -3,7 +3,7 @@ package getStats
 import (
 	"fmt"
 
-	"new_stats/dota2"
+	"../dota2"
 
 	"github.com/dotabuff/manta/dota"
 )
