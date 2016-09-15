@@ -1,8 +1,10 @@
-<<<<<<< HEAD
-# new_stats
+manta parser
 
-=======
-# dota-parser
+base on manta
 
-manta-parser 
->>>>>>> 72bbb25daf1812d8421241c9f62a920505336915
+dependencies:
+golang
+manta
+protobuf
+snappy 
+
