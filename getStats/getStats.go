@@ -6,6 +6,7 @@ import (
 	"../dota2"
 
 	"github.com/dotabuff/manta/dota"
+	"io"
 )
 
 //ReplayData 用于存放解析录像时，从回调函数中获取到的数据
@@ -27,7 +28,7 @@ type ReplayData struct {
 var allHeroStats map[uint32]*dota2.Stats
 
 //GetStats 解析一场比赛的录像，将得到的统计数据存放在allHeroStats中
-func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
+func GetStats(r io.Reader) (map[uint32]*dota2.Stats, error) {
 	replayData := ReplayData{
 		teamDeath : make(map[uint32]uint32, 0),
 		heroMap : make(map[uint32]uint32, 0),
@@ -35,7 +36,7 @@ func GetStats(filename string) (map[uint32]*dota2.Stats, error) {
 		heroTackerMap : make(map[int32]map[int32]*HeroPosition, 0),
 	}
 	//解析录像，获取数据
-	err := parseReplay(filename, &replayData)
+	err := parseReplay(r, &replayData)
 	if err != nil {
 		return nil, fmt.Errorf("解析录像失败：%s", err)
 	}

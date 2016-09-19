@@ -3,7 +3,6 @@ package getStats
 import (
 	"fmt"
 	"../dota2"
-	"os"
 	"strings"
 
 	"reflect"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/dotabuff/manta"
 	"github.com/dotabuff/manta/dota"
+	"io"
 )
 
 //package entity note 1.cdotaplayer.playerId对应 CDOTA_Unit_Hero_中的playerId, playId按照楼层排序
@@ -39,13 +39,9 @@ var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
 var playResourceEntity *manta.PacketEntity
 
-func parseReplay(filename string, replayData *ReplayData) error {
-	f, err := os.Open(filename)
-	if err != nil {
-		return fmt.Errorf("打开比赛录像失败: %s", err)
-	}
-	defer f.Close()
-	parser, err := manta.NewStreamParser(f)
+func parseReplay(r io.Reader, replayData *ReplayData) error {
+
+	parser, err := manta.NewStreamParser(r)
 	if err != nil {
 		return fmt.Errorf("初始化解析器失败: %s", err)
 	}
