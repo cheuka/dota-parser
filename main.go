@@ -24,8 +24,8 @@ func main() {
 	//bzip2Reader := bzip2.NewReader(bizFile)
 	//
 	f := bufio.NewReader(os.Stdin)
-	reader := bzip2.NewReader(f)
-	textAGame(reader)
+        //reader := bzip2.NewReader(f)
+	textAGame(f)
 	//}
 	//defer f.Close()
 	//writeToDB("root:123456@/dota2_new_stats?charset=utf8&parseTime=True&loc=Local", "C:/TI6/")
