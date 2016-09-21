@@ -11,6 +11,7 @@ import (
 	"github.com/dotabuff/manta"
 	"github.com/dotabuff/manta/dota"
 	"io"
+	"log"
 )
 
 //package entity note 1.cdotaplayer.playerId对应 CDOTA_Unit_Hero_中的playerId, playId按照楼层排序
@@ -40,7 +41,6 @@ var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
 var playResourceEntity *manta.PacketEntity
 
 func parseReplay(r io.Reader, replayData *ReplayData) error {
-
 	parser, err := manta.NewStreamParser(r)
 	if err != nil {
 		return fmt.Errorf("初始化解析器失败: %s", err)
@@ -68,6 +68,7 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 		return nil
 	})
 	parser.Callbacks.OnCDemoFileInfo(func(m *dota.CDemoFileInfo) error {
+		log.Printf("OnCDemoFileInfo")
 		replayData.dotaGameInfo = m.GameInfo.Dota
 		Clog(m.String())
 		return nil
@@ -90,6 +91,7 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 
 		return nil
 	})
+	log.Printf("开始解析")
 	parser.Start()                       //开始解析录像
 	initAllHeroStats(parser, replayData) //初始化initAllHeroStats
 	return nil                           //解析完成，返回数据
