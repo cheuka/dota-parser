@@ -4,7 +4,7 @@ import (
 	"compress/bzip2"
 	"io"
 	"log"
-	"./getStats"
+	"github.com/cheuka/dota-parser/getStats"
 	"os"
 	"strings"
 	"encoding/json"
