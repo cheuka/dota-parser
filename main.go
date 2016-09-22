@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 	"encoding/json"
+	"bufio"
 )
 
 func main() {
@@ -15,18 +16,14 @@ func main() {
 	//demFileName := decompressBzip2ToDemFile("C:/2545299883.dem.bz2")
 	//textAGame(demFileName)
 
-	bizFile, _ := os.Open("D://2545254388.dem")
-	//if err != nil {
-	//	log.Fatalf("打开录像压缩文件失败: %s", err)
-	//	return
-	//}
+	//本地读取
+	//bizFile, _ := os.Open("D://2545254388.dem")
 	//defer bizFile.Close()
-	//bzip2Reader := bzip2.NewReader(bizFile)
-	//
+	//textAGame(bizFile)
 
-	//f := bufio.NewReader(os.Stdin)
-	//reader := bzip2.NewReader(f)
-	textAGame(bizFile)
+	//stdin读取
+	f := bufio.NewReader(os.Stdin)
+	textAGame(f)
 	//}
 	//defer f.Close()
 	//writeToDB("root:123456@/dota2_new_stats?charset=utf8&parseTime=True&loc=Local", "C:/TI6/")
