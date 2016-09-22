@@ -25,4 +25,10 @@ message Stats {
     uint32 fedEnemyGold = 23;//死亡敌方获取的金钱
     int32 teamNumber = 24; //选手的队伍
 	bool isWin = 25; //是否获胜
+	int32 player_id = 26; //playerId
+	int32 isFirstGG = 28; //首先打GG
+	int32 isWriteGG = 29; //打GG
+	int32 isReplyGG = 30; //回复GG
+	int32 aloneCatchedNum = 31; //单场比赛抓人次数
+	int32 consumeDamage = 32; //未致死的伤害
 }

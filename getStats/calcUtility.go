@@ -58,3 +58,29 @@ func printIntKeyMaps(tag string, maps map[int32]*HeroPosition) {
 	}
 	Clog("%v, in continued number : %v", tag, inCountinudNum)
 }
+
+//记录打GG时间
+func countGG(replaydata *ReplayData){
+	sorted_keys := make([]float64, 0)
+	for k, _ := range replaydata.ggCount {
+		sorted_keys = append(sorted_keys, float64(k))
+	}
+
+	// sort 'string' key in increasing order
+	sort.Float64s(sorted_keys)
+	firstGG := false
+	for _, k := range sorted_keys {
+		playerId := replaydata.ggCount[float32(k)]
+		if heroStats, exist := getHeroStatesFromPlayerId(playerId); exist && replaydata.gameEndTime - float32(k) < 15{
+			if heroStats.IsWin{
+				heroStats.IsReplyGG = 1
+			} else {
+				if !firstGG{
+					heroStats.IsFirstGG = 1
+					firstGG = true
+				}
+				heroStats.IsWriteGG = 1
+			}
+		}
+	}
+}

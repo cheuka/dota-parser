@@ -39,7 +39,7 @@ var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerSteamID : 76561198046993283
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
 var playResourceEntity *manta.PacketEntity
-
+var gameTime float32//比赛时间
 func parseReplay(r io.Reader, replayData *ReplayData) error {
 	parser, err := manta.NewStreamParser(r)
 	if err != nil {
@@ -73,6 +73,21 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 		Clog(m.String())
 		return nil
 	})
+
+	//记录GG
+	//根据usermessage获取eneityIndex,根据Index获取playerId,根据playerId获取聊天人
+	parser.Callbacks.OnCUserMessageSayText2(func(m *dota.CUserMessageSayText2) error {
+		text := m.GetParam2()
+		if strings.EqualFold("gg", strings.ToLower(text)) {
+			if v,exist := parser.PacketEntities[int32(m.GetEntityindex())].FetchInt32("m_iPlayerID"); exist{
+				replayData.ggCount[gameTime]=int32(v)
+				Clog("said gg time : %v", replayData.ggCount[gameTime])
+			}
+		}
+		Clog(m.String())
+		return nil
+	})
+
 	parser.OnPacketEntity(func(entity *manta.PacketEntity, pet manta.EntityEventType) error {
 
 		if strings.Contains(entity.ClassName, "CDOTA_PlayerResource") {
@@ -81,6 +96,14 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 			//Clog("Properties", entity.Properties)
 			//Clog("\n\n")
 			playResourceEntity = entity
+		}
+
+		if strings.EqualFold(entity.ClassName, "CDOTAGamerulesProxy") {
+			if v, exist := entity.FetchFloat32("CDOTAGamerules.m_fGameTime"); exist {
+				//log.Printf("EntityEvent : %v, %v, %v, %v, %v, %v, %v", pe.ClassName, pet, pe.ClassId, pe.Index, pe.Serial, timeStampToString(float32(parser.NetTick / 30) - gameStartTime), gameStartTime)
+				//printProperties("properties : ", pe.Properties)
+				gameTime = v;
+			}
 		}
 		//for k, v := range entity.ClassBaseline.KV{
 		//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
@@ -188,6 +211,7 @@ func getHeroIdFromSteamId(combatLogName uint32, replayData *ReplayData, aHeroSta
 		if v, ok := playResourceEntity.FetchUint64(indexStr); ok && v == steamId {
 			if v, ok := playResourceEntity.FetchInt32(fmt.Sprintf("m_vecPlayerTeamData.000%d.m_nSelectedHeroID", index)); ok {
 				aHeroStats.HeroId = uint32(v)
+				aHeroStats.PlayerId = int32(index)
 				if selectHero, ok := playResourceEntity.FetchUint32(fmt.Sprintf("m_vecPlayerTeamData.000%d.m_hSelectedHero", index)); ok {
 					replayData.heroMap[combatLogName] = selectHero
 					Clog("steamid : %v, heroId : %v, %v, %v", steamId, v, reflect.TypeOf(v), selectHero)
@@ -196,4 +220,15 @@ func getHeroIdFromSteamId(combatLogName uint32, replayData *ReplayData, aHeroSta
 
 		}
 	}
+}
+
+// 根据playerId来获取 hero stats实体
+func getHeroStatesFromPlayerId(playerId int32) (*dota2.Stats, bool){
+	for _, v := range allHeroStats{
+		if v.PlayerId == playerId {
+			return  v, true
+		}
+	}
+
+	return nil,false
 }

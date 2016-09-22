@@ -22,6 +22,7 @@ type ReplayData struct {
 	heroMap map[uint32]uint32 //英雄combat log的target name对应的 英雄entity name, 由play resource的mSelectHero获得，再通过英雄entity的mModifierName找到对应的英雄
 	heroIndexMap map[uint32]int32 //entitymap key 上面的resource的mSelectHero获得， value：entity的index 用来获取位置
 	heroTackerMap map[int32]map[int32]*HeroPosition //英雄位置记录 第一个key为entity的index唯一， 第二个key为时间戳的整数形式，
+	ggCount map[float32]int32
 }
 
 //统计每个英雄的数据。ket=英雄在combatlog里面的index
@@ -34,6 +35,7 @@ func GetStats(r io.Reader) (map[uint32]*dota2.Stats, error) {
 		heroMap : make(map[uint32]uint32, 0),
 		heroIndexMap : make(map[uint32]int32, 0),
 		heroTackerMap : make(map[int32]map[int32]*HeroPosition, 0),
+		ggCount : make(map[float32]int32, 0),
 	}
 	//解析录像，获取数据
 	err := parseReplay(r, &replayData)
@@ -46,6 +48,7 @@ func GetStats(r io.Reader) (map[uint32]*dota2.Stats, error) {
 	//计算控制指标至allHeroStats
 	calcCreateDeadlyControl(&replayData)
 	calcTeamDeath(&replayData)
+	countGG(&replayData)
 	//计算金钱
 	calcFarm(&replayData)
 	return allHeroStats, nil

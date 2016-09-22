@@ -47,6 +47,12 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 			if isAloneCatch && deadlyDamagelog.GetAttackerTeam() != 4 {
 				Clog("%v : %v is alone catched", timeStampToString(deadlyDamagelog.GetTimestamp() - replayData.gameStartTime), allHeroStats[deadlyDamagelog.GetTargetName()].HeroName)
 				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeCatchedNum++
+				//从assisters获取单抓的助攻人数，每人都单抓次数加1
+				for _, v := range deadlyDamagelog.GetAssistPlayers(){
+					if v, exist := getHeroStatesFromPlayerId(int32(v)); exist{
+						v.AloneCatchedNum++
+					}
+				}
 			}
 
 			//记录单杀次数， 判断条件：助攻人数小于等于1， 不是被野怪杀死
@@ -58,6 +64,15 @@ func calcCreateDeadlyDamages(replayData *ReplayData) {
 				allHeroStats[deadlyDamagelog.GetTargetName()].AloneBeKilledNum++
 			}
 		}
+
+		//计算全部伤害
+		if isHeroToOpponentHeroCombatLog(deadlyDamagelog) && isToOpponentHeroCombatLog(deadlyDamagelog) {
+			allHeroStats[deadlyDamagelog.GetDamageSourceName()].CreateTotalDamages += deadlyDamagelog.GetValue()
+		}
+	}
+	//计算消耗伤害= 全部伤害 - 致死伤害
+	for _, v := range allHeroStats {
+		v.ConsumeDamage = int32(v.CreateTotalDamages - v.CreateDeadlyDamages)
 	}
 }
 

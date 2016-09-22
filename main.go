@@ -7,7 +7,6 @@ import (
 	"./getStats"
 	"os"
 	"strings"
-	"fmt"
 	"encoding/json"
 )
 
@@ -15,14 +14,16 @@ func main() {
 	getStats.SetDebug(false)
 	//demFileName := decompressBzip2ToDemFile("C:/2545299883.dem.bz2")
 	//textAGame(demFileName)
-	bizFile, err := os.Open("D://2545254388.dem")
-	if err != nil {
-		log.Fatalf("打开录像压缩文件失败: %s", err)
-		return
-	}
+
+	bizFile, _ := os.Open("D://2545254388.dem")
+	//if err != nil {
+	//	log.Fatalf("打开录像压缩文件失败: %s", err)
+	//	return
+	//}
 	//defer bizFile.Close()
 	//bzip2Reader := bzip2.NewReader(bizFile)
 	//
+
 	//f := bufio.NewReader(os.Stdin)
 	//reader := bzip2.NewReader(f)
 	textAGame(bizFile)
@@ -89,9 +90,12 @@ func textAGame(r io.Reader) {
 	//	}
 	//
 	//}
+	for _, v := range allHeroStats {
+		getStats.Clog("%v, ggcount first %v, write %v, reply %v", v.PlayerName, v.IsFirstGG, v.IsWriteGG, v.IsReplyGG)
+	}
 	b, err := json.Marshal(allHeroStats)
 	if err == nil {
-		fmt.Printf("%v", string(b))
+		//fmt.Printf("%v", string(b))
 		os.Stdout.Write(b)
 	}
 }
