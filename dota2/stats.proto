@@ -31,4 +31,6 @@ message Stats {
 	int32 isReplyGG = 30; //回复GG
 	int32 aloneCatchedNum = 31; //单场比赛抓人次数
 	int32 consumeDamage = 32; //未致死的伤害
+	string teamName = 33; //队伍名称
+	int32 teamId = 34; //队伍id
 }

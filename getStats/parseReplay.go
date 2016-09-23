@@ -83,10 +83,18 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 		if strings.EqualFold("gg", strings.ToLower(text)) {
 			if v, exist := parser.PacketEntities[int32(m.GetEntityindex())].FetchInt32("m_iPlayerID"); exist {
 				replayData.ggCount[gameTime] = int32(v)
-				Clog("said gg time : %v", replayData.ggCount[gameTime])
+				Clog("player Id %v said gg time : %v", v, timeStampToString(gameTime - replayData.gameStartTime))
 			}
 		}
 		Clog(m.String())
+		return nil
+	})
+	//轮盘聊天GG
+	parser.Callbacks.OnCDOTAUserMsg_ChatWheel(func(m *dota.CDOTAUserMsg_ChatWheel) error {
+		if m.GetChatMessage() == dota.EDOTAChatWheelMessage_k_EDOTA_CW_All_GG || m.GetChatMessage() == dota.EDOTAChatWheelMessage_k_EDOTA_CW_All_GGWP {
+			replayData.ggCount[gameTime] = int32(m.GetPlayerId())
+			Clog("player Id %v said gg by chat wheel time : %v",m.GetPlayerId(), timeStampToString(gameTime - replayData.gameStartTime))
+		}
 		return nil
 	})
 
@@ -151,6 +159,10 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 		return fmt.Errorf("无法从combatLog中找到十个英雄的index")
 	}
 	winTeam := replayData.dotaGameInfo.GetGameWinner()
+	radiantTeamName := replayData.dotaGameInfo.GetRadiantTeamTag()
+	direTeamName := replayData.dotaGameInfo.GetDireTeamTag()
+	radiantTeamId := replayData.dotaGameInfo.GetRadiantTeamId()
+	direTeamId := replayData.dotaGameInfo.GetDireTeamId()
 	for _, aPlayInfo := range replayData.dotaGameInfo.GetPlayerInfo() {
 		for combatLogName, aHeroStats := range allHeroStats {
 			if strings.Contains(aPlayInfo.GetHeroName(), aHeroStats.HeroName) {
@@ -163,6 +175,15 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 				} else {
 					aHeroStats.IsWin = false
 				}
+
+				if aPlayInfo.GetGameTeam() == int32(2) {
+					aHeroStats.TeamName = radiantTeamName
+					aHeroStats.TeamId = int32(radiantTeamId)
+				} else if aPlayInfo.GetGameTeam() == int32(3) {
+					aHeroStats.TeamName = direTeamName
+					aHeroStats.TeamId = int32(direTeamId)
+				}
+
 				getHeroIdFromSteamId(combatLogName, replayData, aHeroStats, playResourceEntity)
 			}
 		}
@@ -187,7 +208,7 @@ func printProperties(tag string, ppt *manta.Properties) {
 
 func printModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData) {
 	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() && !m.GetIsTargetIllusion() {
-		Clog("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp()-replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
+		Clog("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
 		Clog("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
 	}
 }
