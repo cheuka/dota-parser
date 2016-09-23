@@ -2,16 +2,18 @@ package getStats
 
 import (
 	"fmt"
-	"../dota2"
 	"strings"
+
+	"github.com/cheuka/dota-parser/dota2"
 
 	"reflect"
 	"sort"
 
-	"github.com/dotabuff/manta"
-	"github.com/dotabuff/manta/dota"
 	"io"
 	"log"
+
+	"github.com/dotabuff/manta"
+	"github.com/dotabuff/manta/dota"
 )
 
 //package entity note 1.cdotaplayer.playerId对应 CDOTA_Unit_Hero_中的playerId, playId按照楼层排序
@@ -39,7 +41,7 @@ var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerSteamID : 76561198046993283
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
 var playResourceEntity *manta.PacketEntity
-var gameTime float32//比赛时间
+var gameTime float32 //比赛时间
 func parseReplay(r io.Reader, replayData *ReplayData) error {
 	parser, err := manta.NewStreamParser(r)
 	if err != nil {
@@ -79,8 +81,8 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 	parser.Callbacks.OnCUserMessageSayText2(func(m *dota.CUserMessageSayText2) error {
 		text := m.GetParam2()
 		if strings.EqualFold("gg", strings.ToLower(text)) {
-			if v,exist := parser.PacketEntities[int32(m.GetEntityindex())].FetchInt32("m_iPlayerID"); exist{
-				replayData.ggCount[gameTime]=int32(v)
+			if v, exist := parser.PacketEntities[int32(m.GetEntityindex())].FetchInt32("m_iPlayerID"); exist {
+				replayData.ggCount[gameTime] = int32(v)
 				Clog("said gg time : %v", replayData.ggCount[gameTime])
 			}
 		}
@@ -102,7 +104,7 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 			if v, exist := entity.FetchFloat32("CDOTAGamerules.m_fGameTime"); exist {
 				//log.Printf("EntityEvent : %v, %v, %v, %v, %v, %v, %v", pe.ClassName, pet, pe.ClassId, pe.Index, pe.Serial, timeStampToString(float32(parser.NetTick / 30) - gameStartTime), gameStartTime)
 				//printProperties("properties : ", pe.Properties)
-				gameTime = v;
+				gameTime = v
 			}
 		}
 		//for k, v := range entity.ClassBaseline.KV{
@@ -156,9 +158,9 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 				aHeroStats.MatchId = replayData.dotaGameInfo.GetMatchId()
 				aHeroStats.PlayerName = aPlayInfo.GetPlayerName()
 				aHeroStats.TeamNumber = aPlayInfo.GetGameTeam()
-				if aPlayInfo.GetGameTeam() == winTeam{
+				if aPlayInfo.GetGameTeam() == winTeam {
 					aHeroStats.IsWin = true
-				}else{
+				} else {
 					aHeroStats.IsWin = false
 				}
 				getHeroIdFromSteamId(combatLogName, replayData, aHeroStats, playResourceEntity)
@@ -185,7 +187,7 @@ func printProperties(tag string, ppt *manta.Properties) {
 
 func printModifer(m *dota.CMsgDOTACombatLogEntry, p *manta.Parser, replayData *ReplayData) {
 	if m.GetIsTargetHero() && m.GetAttackerName() != m.GetTargetName() && !m.GetTargetIsSelf() && !m.GetIsTargetIllusion() {
-		Clog("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
+		Clog("%v , %v add %v from %v with %v", timeStampToString(m.GetTimestamp()-replayData.gameStartTime), lookForName(p, m.GetTargetName()), lookForName(p, m.GetInflictorName()), lookForName(p, m.GetAttackerName()), m.GetModifierDuration())
 		Clog("%v, %v", m.GetStunDuration(), m.GetSilenceModifier())
 	}
 }
@@ -223,12 +225,12 @@ func getHeroIdFromSteamId(combatLogName uint32, replayData *ReplayData, aHeroSta
 }
 
 // 根据playerId来获取 hero stats实体
-func getHeroStatesFromPlayerId(playerId int32) (*dota2.Stats, bool){
-	for _, v := range allHeroStats{
+func getHeroStatesFromPlayerId(playerId int32) (*dota2.Stats, bool) {
+	for _, v := range allHeroStats {
 		if v.PlayerId == playerId {
-			return  v, true
+			return v, true
 		}
 	}
 
-	return nil,false
+	return nil, false
 }
