@@ -91,7 +91,7 @@ func isDamagelogCount(deadlyDamagelog, aDamagelog *dota.CMsgDOTACombatLogEntry) 
 //获取敌方死亡次数
 func calcTeamDeath(replayData *ReplayData) {
 	for _, heroStates := range allHeroStats {
-		teamNumber := findTeamNumberFromSteamId(heroStates.Steamid, replayData)
+		teamNumber := findTeamNumberFromSteamId(heroStates.SteamId, replayData)
 		for opponentTeamNumber, deathNumber := range replayData.teamDeath {
 			//teamnumber和选手teamnumber不同的时猴，则为敌方死亡次数
 			if opponentTeamNumber != uint32(teamNumber) {
@@ -102,6 +102,14 @@ func calcTeamDeath(replayData *ReplayData) {
 		heroStates.CreateDeadlyStiffControlPerDeath = float32(heroStates.CreateDeadlyStiffControl) / float32(heroStates.OpponentHeroDeaths)
 
 		Clog("player: %v, hero : %v, opponentdeath : %v, damage perdeath : %v, control per death : %v", heroStates.PlayerName, heroStates.HeroName, heroStates.OpponentHeroDeaths, heroStates.CreateDeadlyDamagesPerDeath, heroStates.CreateDeadlyStiffControlPerDeath)
+	}
+}
+
+func calcHealCount(replayData *ReplayData){
+	for _, healLog := range replayData.healLogs{
+		if heroStats,exist := allHeroStats[healLog.GetAttackerName()]; exist{
+			heroStats.Healing += int32(healLog.GetValue())
+		}
 	}
 }
 

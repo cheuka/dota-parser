@@ -2,19 +2,19 @@ syntax = "proto3";
 package dota2;
 
 message Stats {
-	uint64 match_id = 1;//比赛ID
-	uint32 account_id = 2;//选手的account_id
-	uint64 steamid=15;
-	string player_name = 3;//选手昵称
-	uint32 hero_id = 4;//选手使用的英雄ID
-	string hero_name = 5;//选手使用的英雄名称
-	uint32 create_total_damages = 6;//对敌方英雄造成的全部伤害
-	uint32 create_deadly_damages = 7;//对敌方英雄造成的致死伤害
-	float create_total_stiff_control = 8;//对敌方英雄造成的全部硬控（stun+silence+taunt+hex）[单位为秒，保留两位小数]
-	float create_deadly_stiff_control = 9;//对敌方英雄造成的致死硬控（stun+silence+taunt+hex）[单位为秒，保留两位小数]
-	uint32 opponent_hero_deaths = 10;//敌方英雄死亡总次数
-	float create_deadly_damages_per_death = 11;//create_deadly_damages/opponent_hero_deaths[单位为点，保留两位小数]
-	float create_deadly_stiff_control_per_death = 12;//create_deadly_stiff_control/opponent_hero_deaths[单位为秒，保留两位小数]
+	uint64 matchId = 1;//比赛ID
+	uint32 accountId = 2;//选手的account_id
+	uint64 steamId=15;
+	string playerName = 3;//选手昵称
+	uint32 heroId = 4;//选手使用的英雄ID
+	string heroName = 5;//选手使用的英雄名称
+	uint32 createTotalDamages = 6;//对敌方英雄造成的全部伤害
+	uint32 createDeadlyDamages = 7;//对敌方英雄造成的致死伤害
+	float createTotalStiffControl = 8;//对敌方英雄造成的全部硬控（stun+silence+taunt+hex）[单位为秒，保留两位小数]
+	float createDeadlyStiffControl = 9;//对敌方英雄造成的致死硬控（stun+silence+taunt+hex）[单位为秒，保留两位小数]
+	uint32 opponentHeroDeaths = 10;//敌方英雄死亡总次数
+	float createDeadlyDamagesPerDeath = 11;//create_deadly_damages/opponent_hero_deaths[单位为点，保留两位小数]
+	float createDeadlyStiffControlPerDeath = 12;//create_deadly_stiff_control/opponent_hero_deaths[单位为秒，保留两位小数]
     uint32 aloneKilledNum = 16;//单场比赛单杀敌方英雄数量
 	uint32 aloneBeKilledNum = 17;//单场比赛被单杀数量
 	int32 aloneBeCatchedNum = 18; //单场比赛被抓次数
@@ -33,4 +33,10 @@ message Stats {
 	int32 consumeDamage = 32; //未致死的伤害
 	string teamName = 33; //队伍名称
 	int32 teamId = 34; //队伍id
+	int32 healing = 35; //治疗量
+	float killRate = 36; //参团率
+	int32 wardsBuy = 37; //买眼数量
+	int32 wardsKill = 38; //反眼数量
+	int32 runeCount = 39; //控符数量
+	int32 apm = 40; //APM
 }

@@ -84,3 +84,23 @@ func countGG(replaydata *ReplayData){
 		}
 	}
 }
+
+func countWards(replaydata *ReplayData){
+	for _,wardsLog := range replaydata.obWardsLogs{
+		if heroStats, exist := allHeroStats[wardsLog.GetTargetName()]; exist{
+			heroStats.WardsBuy += 1
+		}
+	}
+
+	for _,wardsLog := range replaydata.sentryWardsLogs{
+		if heroStats, exist := allHeroStats[wardsLog.GetTargetName()]; exist{
+			heroStats.WardsBuy += 2
+		}
+	}
+
+	for _,wardsLog := range replaydata.killWardsLogs{
+		if heroStats, exist := allHeroStats[wardsLog.GetAttackerName()]; exist{
+			heroStats.WardsKill += 1
+		}
+	}
+}

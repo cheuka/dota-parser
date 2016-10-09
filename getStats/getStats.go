@@ -24,6 +24,10 @@ type ReplayData struct {
 	heroIndexMap    map[uint32]int32                  //entitymap key 上面的resource的mSelectHero获得， value：entity的index 用来获取位置
 	heroTackerMap   map[int32]map[int32]*HeroPosition //英雄位置记录 第一个key为entity的index唯一， 第二个key为时间戳的整数形式，
 	ggCount         map[float32]int32
+	healLogs []*dota.CMsgDOTACombatLogEntry
+	obWardsLogs []*dota.CMsgDOTACombatLogEntry
+	sentryWardsLogs []*dota.CMsgDOTACombatLogEntry
+	killWardsLogs []*dota.CMsgDOTACombatLogEntry
 }
 
 //统计每个英雄的数据。ket=英雄在combatlog里面的index
@@ -37,6 +41,10 @@ func GetStats(r io.Reader) (map[uint32]*dota2.Stats, error) {
 		heroIndexMap:  make(map[uint32]int32, 0),
 		heroTackerMap: make(map[int32]map[int32]*HeroPosition, 0),
 		ggCount:       make(map[float32]int32, 0),
+		healLogs:      make([]*dota.CMsgDOTACombatLogEntry, 0),
+		obWardsLogs:     make([]*dota.CMsgDOTACombatLogEntry, 0),
+		sentryWardsLogs:     make([]*dota.CMsgDOTACombatLogEntry, 0),
+		killWardsLogs:     make([]*dota.CMsgDOTACombatLogEntry, 0),
 	}
 	//解析录像，获取数据
 	err := parseReplay(r, &replayData)
@@ -52,5 +60,7 @@ func GetStats(r io.Reader) (map[uint32]*dota2.Stats, error) {
 	countGG(&replayData)
 	//计算金钱
 	calcFarm(&replayData)
+	calcHealCount(&replayData)
+	countWards(&replayData)
 	return allHeroStats, nil
 }
