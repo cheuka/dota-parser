@@ -27,10 +27,10 @@ import (
 //modifier_shadow_demon_disruption 毒狗的关 是否加进去还需判断目标是否同一个team
 var SPECIAL_MODIFIERS = []string{"modifier_axe_berserkers_call"}
 
-const NAME_OB_WARDS  = "item_ward_observer"
-const NAME_SENTRY_WARDS  = "item_ward_sentry"
-const KILL_NAME_OB_WARDS  = "npc_dota_observer_wards"
-const KILL_NAME_SENTRY_WARDS  = "npc_dota_sentry_wards"
+const NAME_OB_WARDS = "item_ward_observer"
+const NAME_SENTRY_WARDS = "item_ward_sentry"
+const KILL_NAME_OB_WARDS = "npc_dota_observer_wards"
+const KILL_NAME_SENTRY_WARDS = "npc_dota_sentry_wards"
 //playResourceEntity : m_vecPlayerTeamData
 //0001
 //2016/08/26 11:30:53 Properties, m_vecPlayerTeamData.0000.m_flTeamFightParticipation : 0.25
@@ -46,6 +46,11 @@ const KILL_NAME_SENTRY_WARDS  = "npc_dota_sentry_wards"
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
 var playResourceEntity *manta.PacketEntity
 var gameTime float32 //比赛时间
+var radientEntityIndex int32
+var direEntityIndex int32
+var clickMap map[int32]int32
+var playerMap map[int32]*manta.PacketEntity
+
 func parseReplay(r io.Reader, replayData *ReplayData) error {
 	parser, err := manta.NewStreamParser(r)
 	if err != nil {
@@ -71,21 +76,21 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 				replayData.gameEndTime = m.GetTimestamp()
 			}
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_HEAL:
-			if(m.GetAttackerName() != m.GetTargetName()){
+			if (m.GetAttackerName() != m.GetTargetName()) {
 				replayData.healLogs = append(replayData.healLogs, m)
 			}
 		//Clog("%v, %v, %v, %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(parser, m.GetTargetName()), lookForName(parser, m.GetAttackerName()), m.GetValue())
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_PICKUP_RUNE:
 			Clog("%v, %v, %v, %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(parser, m.GetTargetName()), lookForName(parser, m.GetAttackerName()), lookForName(parser, m.GetInflictorName()))
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_DEATH:
-			if strings.EqualFold(KILL_NAME_OB_WARDS, lookForName(parser, m.GetTargetName())) || strings.EqualFold(KILL_NAME_SENTRY_WARDS, lookForName(parser, m.GetTargetName())){
+			if strings.EqualFold(KILL_NAME_OB_WARDS, lookForName(parser, m.GetTargetName())) || strings.EqualFold(KILL_NAME_SENTRY_WARDS, lookForName(parser, m.GetTargetName())) {
 				replayData.killWardsLogs = append(replayData.killWardsLogs, m)
 			}
-			//Clog("%v, %v, %v, %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(parser, m.GetTargetName()), lookForName(parser, m.GetAttackerName()), lookForName(parser, m.GetInflictorName()))
+		//Clog("%v, %v, %v, %v", timeStampToString(m.GetTimestamp() - replayData.gameStartTime), lookForName(parser, m.GetTargetName()), lookForName(parser, m.GetAttackerName()), lookForName(parser, m.GetInflictorName()))
 		case dota.DOTA_COMBATLOG_TYPES_DOTA_COMBATLOG_PURCHASE:
-			if strings.EqualFold(NAME_OB_WARDS, lookForName(parser, m.GetValue())){
+			if strings.EqualFold(NAME_OB_WARDS, lookForName(parser, m.GetValue())) {
 				replayData.obWardsLogs = append(replayData.obWardsLogs, m)
-			}else if strings.EqualFold(NAME_SENTRY_WARDS, lookForName(parser, m.GetValue())){
+			} else if strings.EqualFold(NAME_SENTRY_WARDS, lookForName(parser, m.GetValue())) {
 				replayData.sentryWardsLogs = append(replayData.sentryWardsLogs, m)
 			}
 		}
@@ -122,8 +127,9 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 		return nil
 	})
 
-	clickMap := make(map[int32]int32, 0)
-	parser.Callbacks.OnCDOTAUserMsg_SpectatorPlayerUnitOrders(func(m *dota.CDOTAUserMsg_SpectatorPlayerUnitOrders) error{
+	clickMap = make(map[int32]int32, 0)
+	playerMap = make(map[int32]*manta.PacketEntity, 0)
+	parser.Callbacks.OnCDOTAUserMsg_SpectatorPlayerUnitOrders(func(m *dota.CDOTAUserMsg_SpectatorPlayerUnitOrders) error {
 		clickMap[m.GetEntindex()]++;
 		return nil
 	})
@@ -145,11 +151,21 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 			}
 		}
 
+		if pet == manta.EntityEventType_Create && strings.EqualFold(entity.ClassName, "CDOTA_DataRadiant") {
+			//m_iRunePickups
+			radientEntityIndex = entity.Index
+		} else if pet == manta.EntityEventType_Create && strings.EqualFold(entity.ClassName, "CDOTA_DataDire") {
+			direEntityIndex = entity.Index
+		}
 		//for k, v := range entity.ClassBaseline.KV{
 		//	if strings.Contains(k, "pick") || strings.Contains(k, "ban"){
 		//		Clog("EntityEvent : %v, %v, %v, %v", entity.ClassName, pet, k, v)
 		//	}
 		//}
+		if pet != manta.EntityEventType_Delete && strings.EqualFold(entity.ClassName, "CDOTAPlayer") {
+			playerMap[entity.Index] = entity
+		}
+
 		recordHeroPosition(parser, entity, pet, replayData)
 
 		return nil
@@ -157,9 +173,7 @@ func parseReplay(r io.Reader, replayData *ReplayData) error {
 	log.Printf("开始解析")
 	parser.Start()                       //开始解析录像
 	initAllHeroStats(parser, replayData) //初始化initAllHeroStats
-	for k,v := range clickMap{
-		Clog("click map : %v, %v", k, v * 60 / int32(replayData.gameEndTime - replayData.gameStartTime))
-	}
+
 	return nil                           //解析完成，返回数据
 }
 
@@ -217,7 +231,7 @@ func initAllHeroStats(parser *manta.Parser, replayData *ReplayData) error {
 					aHeroStats.TeamId = int32(direTeamId)
 				}
 
-				getHeroIdFromSteamId(combatLogName, replayData, aHeroStats, playResourceEntity)
+				getHeroIdFromSteamId(parser, combatLogName, replayData, aHeroStats, playResourceEntity)
 			}
 		}
 	}
@@ -260,7 +274,7 @@ func lookForName(parser *manta.Parser, index uint32) string {
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerSteamID : 76561198046993283
 //2016/08/26 11:38:09 ClassBaseline, m_vecPlayerData.0000.m_iPlayerTeam : 2
 //根据steamId 获取英雄ID
-func getHeroIdFromSteamId(combatLogName uint32, replayData *ReplayData, aHeroStats *dota2.Stats, playResourceEntity *manta.PacketEntity) {
+func getHeroIdFromSteamId(parser *manta.Parser, combatLogName uint32, replayData *ReplayData, aHeroStats *dota2.Stats, playResourceEntity *manta.PacketEntity) {
 	steamId := aHeroStats.SteamId
 	for index := 0; index < 10; index++ {
 		indexStr := fmt.Sprintf("m_vecPlayerData.000%d.m_iPlayerSteamID", index)
@@ -279,7 +293,35 @@ func getHeroIdFromSteamId(combatLogName uint32, replayData *ReplayData, aHeroSta
 				}
 			}
 
+			if index >= 5 {
+				entity := parser.PacketEntities[direEntityIndex]
+				runeStr := fmt.Sprintf("m_vecDataTeam.000%d.m_iRunePickups", index - 5)
+				if runesCount, exist := entity.FetchInt32(runeStr); exist {
+					aHeroStats.RuneCount = runesCount
+				}
+			} else {
+				entity := parser.PacketEntities[radientEntityIndex]
+				runeStr := fmt.Sprintf("m_vecDataTeam.000%d.m_iRunePickups", index)
+				if runesCount, exist := entity.FetchInt32(runeStr); exist {
+					aHeroStats.RuneCount = runesCount
+				}
+			}
+
+			for k, v := range clickMap {
+				Clog("clickMap %v, length %v", k, len(clickMap))
+				if entity, exist := playerMap[k]; exist {
+					Clog("entity %v", k)
+					if id, exist2 := entity.FetchInt32("m_iPlayerID"); exist2 {
+						if id == int32(index) {
+							aHeroStats.Apm = v * 60 / int32(replayData.gameEndTime - replayData.gameStartTime)
+							break
+						}
+					}
+				}
+				//Clog("click map : %v, %v", k, v * 60 / int32(replayData.gameEndTime - replayData.gameStartTime))
+			}
 		}
+
 	}
 }
 

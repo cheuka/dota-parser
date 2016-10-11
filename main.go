@@ -8,21 +8,22 @@ import (
 	"os"
 	"strings"
 	"encoding/json"
+	"bufio"
 )
 
 func main() {
-	//getStats.SetDebug(false)
+	getStats.SetDebug(false)
 	//demFileName := decompressBzip2ToDemFile("C:/2545299883.dem.bz2")
 	//textAGame(demFileName)
 
 	//本地读取
-	bizFile, _ := os.Open("D://2545254388.dem")
-	defer bizFile.Close()
-	textAGame(bizFile)
+	//bizFile, _ := os.Open("D://2545254388.dem")
+	//defer bizFile.Close()
+	//textAGame(bizFile)
 
 	//stdin读取
-	//f := bufio.NewReader(os.Stdin)
-	//textAGame(f)
+	f := bufio.NewReader(os.Stdin)
+	textAGame(f)
 	//defer f.Close()
 	//writeToDB("root:123456@/dota2_new_stats?charset=utf8&parseTime=True&loc=Local", "C:/TI6/")
 	//writeToDB("root:123456@/dota2_new_stats_for_cn?charset=utf8&parseTime=True&loc=Local", "D:/replays/")
@@ -87,7 +88,7 @@ func textAGame(r io.Reader) {
 	//}
 	getStats.Clog("length of map : %d", len(allHeroStats))
 	for _, v := range allHeroStats {
-		getStats.Clog("%v, ggcount first %v, write %v, reply %v, healing %v, wardsBuy, %v, wardKill %v", v.PlayerName, v.IsFirstGG, v.IsWriteGG, v.IsReplyGG, v.Healing, v.WardsBuy, v.WardsKill)
+		getStats.Clog("%v, ggcount first %v, write %v, reply %v, healing %v, wardsBuy, %v, wardKill %v, runes %v, apm, %v", v.PlayerName, v.IsFirstGG, v.IsWriteGG, v.IsReplyGG, v.Healing, v.WardsBuy, v.WardsKill, v.RuneCount, v.Apm)
 	}
 	b, err := json.Marshal(allHeroStats)
 	if err == nil {
